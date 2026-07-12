@@ -1,0 +1,84 @@
+# Compiled class files
+*.class
+
+# Package files
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Virtual machine crash logs
+hs_err_pid*.log
+
+# Gradle
+.gradle/
+build/
+dist/
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.project
+.classpath
+.settings/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Local configuration
+local.properties
+gradle.properties
+*.local
+
+# Android
+*.apk
+*.ap_
+*.aab
+*.dex
+*.so
+*.pro
+*.mapping.txt
+AndroidManifest.xml
+
+# LibGDX natives
+natives/
+
+# Assets generated
+textures/
+sprites/
+
+# JDK
+jdk-*/
+jdk-*.zip
+
+# Save files
+saves/
+
+# Tools
+tools/
+*.py
+*.pyc
+
+# Temporary image files
+*.png
+*.jpg
+*.jpeg
+*.gif
+!assets/**/*.png
+!assets/**/*.jpg
+!assets/**/*.jpeg
+!assets/**/*.gif
+
+# Misc
+.DS_Store
+Thumbs.db
+.project
+.settings/
+.checkstyle

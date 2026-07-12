@@ -1,0 +1,20 @@
+# 字体生成配置
+# 使用 Hiero 工具或 FreeTypeFontGenerator 生成 BitmapFont
+# 命令示例: java -jar hiero.jar -chars chinese_chars.txt -size 24 -font NotoSansSC.ttf
+
+# 包含的字符集
+# 1. ASCII 可打印字符 (32-126)
+# 2. 中文汉字 (428个不重复汉字，来自 strings.xml)
+# 3. 常用标点符号
+
+# 输出配置
+font.size=24
+font.bold=false
+font.color=white
+padding.x=2
+padding.y=2
+padding.width=2
+padding.height=2
+rendering=FreeType
+glyph.page.width=1024
+glyph.page.height=1024
