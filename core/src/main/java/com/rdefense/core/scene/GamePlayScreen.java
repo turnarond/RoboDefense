@@ -36,28 +36,31 @@ public class GamePlayScreen extends GameScreen {
     private LibGdxInputAdapter inputAdapter;
     private boolean initialized = false;
     private String errorMsg = null;
+    private boolean showPauseMenu = false;
     // 可选的预配置关卡（由 LevelSelectScreen 调用）
     private int pendingLevel = -1;
     private int pendingDifficulty = 0;
+    private boolean resumeMode = false;     // 从快速存档恢复
+    private int loadSlotId = -1;            // 从指定槽位加载（>=0 有效）
 
     public GamePlayScreen(RoboDefenseGame game) {
         super(game);
     }
 
-    /**
-     * 配置要启动的关卡（由 LevelSelectScreen 调用）
-     */
+    /** 配置要启动的关卡（由 LevelSelectScreen 调用） */
     public void configureLevel(int levelType, int difficulty) {
         this.pendingLevel = levelType;
         this.pendingDifficulty = difficulty;
     }
 
-    /**
-     * 兼容原有构造函数签名：部分界面会使用 GamePlayScreen(game, boolean)
-     * 仅用于保持向后兼容性，实际逻辑集中在 configureLevel/init
-     */
-    public GamePlayScreen(RoboDefenseGame game, boolean dummy) {
-        this(game);
+    /** 从快速存档恢复（主菜单"继续游戏"） */
+    public void setResumeMode() {
+        this.resumeMode = true;
+    }
+
+    /** 从指定槽位加载（保存管理界面） */
+    public void setLoadSlot(int slotId) {
+        this.loadSlotId = slotId;
     }
 
     @Override
@@ -75,9 +78,26 @@ public class GamePlayScreen extends GameScreen {
 
             gameState = new GameState(1, 0, false);
             gameState.setOptions(game.getOptions());
-            // 如果有预配置的关卡，则使用之
             int levelToInit = (pendingLevel >= 0) ? pendingLevel : 0;
-            gameState.initGame(levelToInit);
+            int diffToInit = (pendingDifficulty >= 0) ? pendingDifficulty : 1;
+            gameState.initGame(levelToInit, diffToInit);
+
+            // 加载存档（resumeMode 或 loadSlot）
+            boolean loaded = false;
+            if (resumeMode) {
+                loaded = game.getGameSaveManager().quickLoad(gameState);
+                if (loaded) Gdx.app.log("GamePlayScreen", "快速存档加载成功");
+                else Gdx.app.log("GamePlayScreen", "快速存档加载失败，开始新游戏");
+            } else if (loadSlotId >= 0) {
+                loaded = game.getGameSaveManager().loadSave(loadSlotId, gameState);
+                if (loaded) {
+                    Gdx.app.log("GamePlayScreen", "槽位 " + loadSlotId + " 加载成功");
+                } else {
+                    errorMsg = "存档加载失败";
+                    Gdx.app.error("GamePlayScreen", "槽位 " + loadSlotId + " 加载失败");
+                    return;
+                }
+            }
 
             GameRenderer renderer = game.getServices().getRenderer();
             camera = game.getCamera();
@@ -142,6 +162,23 @@ public class GamePlayScreen extends GameScreen {
     protected void update(float delta) {
         if (!initialized || gameState == null) return;
         try {
+            // ESC 暂停并显示菜单
+            if (com.badlogic.gdx.Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.ESCAPE)) {
+                int rs = gameState.getRunState();
+                if (showPauseMenu) {
+                    showPauseMenu = false;
+                    gameState.togglePause();
+                } else if (rs == GameState.GAME_PAUSED) {
+                    gameState.togglePause();
+                } else if (rs == GameState.GAME_RUNNING || rs == GameState.GAME_FAST_FWD) {
+                    gameState.togglePause();
+                    showPauseMenu = true;
+                }
+            }
+            // 空格切换快进
+            if (com.badlogic.gdx.Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.SPACE)) {
+                gameState.toggleFastFwd();
+            }
             // 调试按键：按 F9 强制触发 HD 回退，便于观察短消息
             if (com.badlogic.gdx.Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.F9)) {
                 try {
@@ -233,7 +270,11 @@ public class GamePlayScreen extends GameScreen {
         // 9. 状态覆盖层
         switch (runState) {
             case GameState.GAME_PAUSED:
-                uiRenderer.renderPauseOverlay("游戏暂停");
+                if (showPauseMenu) {
+                    renderPauseMenu(renderer);
+                } else {
+                    uiRenderer.renderPauseOverlay("游戏暂停");
+                }
                 break;
             case GameState.GAME_LOST:
                 uiRenderer.renderGameOverOverlay("游戏结束", "点击重试");
@@ -278,6 +319,8 @@ public class GamePlayScreen extends GameScreen {
      */
     private void drawTowers(GameRenderer renderer) {
         LibGdxRenderer libGdxRenderer = (LibGdxRenderer) renderer;
+        // 显式施加相机变换（与世界坐标绘制一致）
+        libGdxRenderer.applyCameraTransform(camera.getXBase(), camera.getYBase(), camera.getScale());
         libGdxRenderer.begin();
         for (GameTower t = gameState.getTowerList(); t != null; t = t.next) {
             int type = t.getType();
@@ -290,31 +333,18 @@ public class GamePlayScreen extends GameScreen {
             float wx = t.getGridX() * GRID_PIXEL_SIZE;
             float wy = t.getGridY() * GRID_PIXEL_SIZE;
 
-            // 获取精灵图的实际帧尺寸
-            int frameWidth = libGdxRenderer.getSpriteFrameWidth(spriteSheetName, totalFrames);
-            int frameHeight = libGdxRenderer.getSpriteFrameHeight(spriteSheetName, totalFrames);
+            // 塔 = 一个格子，统一使用 GRID_PIXEL_SIZE（32×32 世界像素）
+            float towerSize = GRID_PIXEL_SIZE;
 
-            // 如果无法获取尺寸，使用默认值
-            if (frameWidth <= 0 || frameHeight <= 0) {
-                frameWidth = GRID_PIXEL_SIZE;
-                frameHeight = GRID_PIXEL_SIZE;
-            }
-
-            // 计算炮塔头部世界 Y
+            // 计算炮塔转头世界 Y（转头在底座上方 towerHeight 像素）
             int towerHeight = TowerData.towerHeight(type);
-            // Android 原版（左上角锚点）：
-            //   底座: drawBitmap(img, gridX*GRID, gridY*GRID) - 左上角
-            //   转头: drawBitmap(img, gridX*GRID, gridY*GRID - towerHeight) - 左上角
-            // 在 libGDX 中（左下角锚点）：
-            //   底座底部 = gridY * GRID_PIXEL_SIZE
-            //   转头底部 = 底座底部 + towerHeight（转头与底座重叠 towerHeight 像素）
             float turretWorldY = wy + towerHeight;
 
             // 1. 绘制底座（帧 0）
-            libGdxRenderer.drawSpriteFrame(spriteSheetName, 0, totalFrames, wx, wy, frameWidth, frameHeight);
+            libGdxRenderer.drawSpriteFrame(spriteSheetName, 0, totalFrames, wx, wy, towerSize, towerSize);
 
-            // 2. 绘制转头（帧 frameIndex）- 与底座重叠 towerHeight 像素
-            libGdxRenderer.drawSpriteFrame(spriteSheetName, frameIndex, totalFrames, wx, turretWorldY, frameWidth, frameHeight);
+            // 2. 绘制转头（帧 frameIndex）
+            libGdxRenderer.drawSpriteFrame(spriteSheetName, frameIndex, totalFrames, wx, turretWorldY, towerSize, towerSize);
         }
         libGdxRenderer.end();
     }
@@ -325,6 +355,7 @@ public class GamePlayScreen extends GameScreen {
      */
     private void drawEnemies(GameRenderer renderer, int stateIndex) {
         LibGdxRenderer libGdxRenderer = (LibGdxRenderer) renderer;
+        libGdxRenderer.applyCameraTransform(camera.getXBase(), camera.getYBase(), camera.getScale());
         libGdxRenderer.begin();
         for (Enemy e = gameState.getEnemyList(); e != null; e = e.next) {
             int wx = e.calcPixelX();
@@ -380,6 +411,7 @@ public class GamePlayScreen extends GameScreen {
      */
     private void drawBullets(GameRenderer renderer, int stateIndex) {
         LibGdxRenderer libGdxRenderer = (LibGdxRenderer) renderer;
+        libGdxRenderer.applyCameraTransform(camera.getXBase(), camera.getYBase(), camera.getScale());
         libGdxRenderer.begin();
 
         for (Bullet b = gameState.getBulletList(); b != null; b = b.next) {
@@ -419,9 +451,10 @@ public class GamePlayScreen extends GameScreen {
         int screenW = renderer.getScreenWidth();
         int screenH = renderer.getScreenHeight();
 
-        // 顶部信息栏背景（深蓝色）
-        renderer.drawRect(0, screenH - 32, screenW, 32, 0.05f, 0.1f, 0.2f, 0.85f);
-        renderer.drawRect(0, screenH - 1, screenW, 1, 0.2f, 0.4f, 0.6f, 0.9f);
+        // 顶部信息栏背景（科幻面板风格）
+        renderer.drawRect(0, screenH - 34, screenW, 34, 0.06f, 0.08f, 0.16f, 0.93f);
+        renderer.drawRect(0, screenH - 1, screenW, 2, 0.2f, 0.36f, 0.55f, 0.85f);
+        renderer.drawRect(0, screenH - 34, screenW, 1, 0.12f, 0.24f, 0.4f, 0.6f);
 
         float yTop = screenH - 18;
         float xStart = 12;
@@ -430,8 +463,14 @@ public class GamePlayScreen extends GameScreen {
                 0.9f, 0.95f, 1.0f, 1.0f);
         renderer.drawText("$" + gameState.getMoney(), xStart + 80, yTop,
                 0.3f, 1.0f, 0.3f, 1.0f);
-        renderer.drawText("HP:" + gameState.getHealth(), xStart + 200, yTop,
-                1.0f, 0.3f, 0.3f, 1.0f);
+        // 生命值 + 血量条
+        int hp = gameState.getHealth();
+        renderer.drawText("HP " + hp, xStart + 200, yTop,
+                0.15f, 0.92f, 0.28f, 1.0f);
+        int hpMax = gameState.getStartingHealth();
+        float hpRatio = Math.min(1.0f, (float)hp / Math.max(1, hpMax));
+        renderer.drawRect(xStart + 242, screenH - 16, 40, 4, 0.35f, 0.12f, 0.12f, 0.7f);
+        renderer.drawRect(xStart + 242, screenH - 16, 40 * hpRatio, 4, 0.1f, 0.85f, 0.22f, 0.9f);
 
         // 分数显示：处理累计动画
         int score = gameState.getScore();
@@ -551,7 +590,6 @@ public class GamePlayScreen extends GameScreen {
         int animFrame = gameLoop.getStateIndex() >> 1;
         int frameIndex = TowerData.getDirectionFrameIndex(activeTowerId, 270, animFrame);
         int towerHeight = TowerData.towerHeight(activeTowerId);
-        int turretOffset = TowerData.turretYOffset(activeTowerId);
 
         float baseX = gridX * GRID_PIXEL_SIZE;
         float baseY = gridY * GRID_PIXEL_SIZE;
@@ -563,18 +601,94 @@ public class GamePlayScreen extends GameScreen {
         //   转头底部 = 底座底部 + towerHeight（转头与底座重叠 towerHeight 像素）
         float turretY = baseY + towerHeight;
 
-        float size = GRID_PIXEL_SIZE;
-        // libGDX batch.draw 以左下角为锚点，传入的 Y 是精灵底部位置
+        // 塔 = 一个格子，统一使用 GRID_PIXEL_SIZE
+        float towerSize = GRID_PIXEL_SIZE;
+
+        // 绘制底座 + 转头（与原版渲染一致）
         libGdxRenderer.drawSpriteFrame(spriteSheetName, 0, totalFrames,
                 baseX, baseY,
-                size, size,
+                towerSize, towerSize,
                 1.0f, 1.0f, 1.0f, 0.7f);
         libGdxRenderer.drawSpriteFrame(spriteSheetName, frameIndex, totalFrames,
                 baseX, turretY,
-                size, size,
+                towerSize, towerSize,
                 1.0f, 1.0f, 1.0f, 0.7f);
 
         libGdxRenderer.end();
+    }
+
+    /**
+     * 渲染暂停菜单（ESC 调出）
+     */
+    private void renderPauseMenu(GameRenderer renderer) {
+        renderer.applyCameraTransform(0, 0, 1.0f);
+        renderer.begin();
+        float sw = renderer.getScreenWidth();
+        float sh = renderer.getScreenHeight();
+
+        // 半透明遮罩
+        renderer.drawRect(0, 0, sw, sh, 0.03f, 0.04f, 0.1f, 0.72f);
+
+        // 居中面板
+        float pw = 180, ph = 200;
+        float px = sw / 2 - pw / 2;
+        float py = sh / 2 - ph / 2;
+        renderer.drawRect(px, py, pw, ph, 0.08f, 0.11f, 0.2f, 0.94f);
+        renderer.drawRect(px, py + ph - 1, pw, 2, 0.2f, 0.36f, 0.55f, 0.8f);
+
+        // 标题
+        float cx = sw / 2;
+        renderer.drawText("游戏暂停", cx - 30, py + ph - 24, 0.7f, 0.82f, 0.95f, 1.0f);
+
+        // 按钮（从下到上排列，无重叠）
+        float bw = 140, bh = 36, gap = 12;
+        float bx = cx - bw / 2;
+
+        float by3 = py + 16;                        // 不保存退出（底）
+        float by2 = by3 + bh + gap;                 // 保存并退出（中）
+        float by1 = by2 + bh + gap;                 // 继续游戏（顶）
+
+        // 继续游戏（绿）
+        renderer.drawRect(bx, by1, bw, bh, 0.08f, 0.28f, 0.12f, 0.9f);
+        renderer.drawRect(bx, by1 + bh - 1, bw, 1, 0.15f, 0.45f, 0.2f, 0.7f);
+        renderer.drawText("继续游戏", bx + bw/2 - 22, by1 + 14, 0.75f, 0.92f, 0.8f, 1.0f);
+
+        // 保存并退出（蓝）
+        renderer.drawRect(bx, by2, bw, bh, 0.06f, 0.12f, 0.3f, 0.9f);
+        renderer.drawRect(bx, by2 + bh - 1, bw, 1, 0.12f, 0.25f, 0.5f, 0.7f);
+        renderer.drawText("保存并退出", bx + bw/2 - 28, by2 + 14, 0.75f, 0.85f, 0.95f, 1.0f);
+
+        // 不保存退出（红）
+        renderer.drawRect(bx, by3, bw, bh, 0.25f, 0.08f, 0.1f, 0.85f);
+        renderer.drawRect(bx, by3 + bh - 1, bw, 1, 0.45f, 0.12f, 0.15f, 0.7f);
+        renderer.drawText("不保存退出", bx + bw/2 - 28, by3 + 14, 0.9f, 0.65f, 0.65f, 1.0f);
+
+        renderer.end();
+
+        // 处理点击
+        if (Gdx.input.justTouched()) {
+            float sx = Gdx.input.getX();
+            float sy = sh - Gdx.input.getY(); // flip Y
+            if (sx >= bx && sx <= bx + bw) {
+                if (sy >= by1 && sy <= by1 + bh) {
+                    showPauseMenu = false;
+                    gameState.togglePause();
+                } else if (sy >= by2 && sy <= by2 + bh) {
+                    try {
+                        game.getGameSaveManager().quickSave(gameState);
+                    } catch (Exception e) {
+                        Gdx.app.error("GamePlayScreen", "快速保存失败", e);
+                    }
+                    gameState.endGame(GameState.GAME_NOT_STARTED);
+                    showPauseMenu = false;
+                    switchScreen(new MainMenuScreen(game));
+                } else if (sy >= by3 && sy <= by3 + bh) {
+                    // 不保存退出
+                    showPauseMenu = false;
+                    switchScreen(new MainMenuScreen(game));
+                }
+            }
+        }
     }
 
     /**
@@ -596,6 +710,53 @@ public class GamePlayScreen extends GameScreen {
         }
 
         uiRenderer.renderTowerButtons(gameState.getMoney(), stateIndex);
+
+        // 在按钮上绘制塔精灵预览
+        drawTowerButtonSprites(renderer);
+    }
+
+    /**
+     * 在塔按钮上绘制塔精灵图
+     */
+    private void drawTowerButtonSprites(GameRenderer renderer) {
+        LibGdxRenderer libGdxRenderer = (LibGdxRenderer) renderer;
+        UiRenderer.TowerButtonInfo[] buttons = uiRenderer.getTowerButtons();
+        if (buttons == null) return;
+
+        libGdxRenderer.begin();
+
+        for (UiRenderer.TowerButtonInfo button : buttons) {
+            if (button == null) continue;
+            String sheetName = SpriteNames.tower(button.towerType);
+            int totalFrames = TowerData.getTotalFrames(button.towerType);
+            int fw = libGdxRenderer.getSpriteFrameWidth(sheetName, totalFrames);
+            int fh = libGdxRenderer.getSpriteFrameHeight(sheetName, totalFrames);
+            if (fw <= 0 || fh <= 0) { fw = 32; fh = 32; }
+
+            // 将精灵缩放适配按钮尺寸
+            float scale = Math.min(
+                    (button.width - 12) / (float) fw,
+                    (button.height - 26) / (float) fh);
+            int drawW = (int) (fw * scale);
+            int drawH = (int) (fh * scale);
+
+            // 居中绘制底座
+            float drawX = button.screenX + (button.width - drawW) / 2f;
+            float drawY = button.screenY + (button.height - drawH) / 2f - 6;
+
+            libGdxRenderer.drawSpriteFrame(sheetName, 0, totalFrames,
+                    drawX, drawY, drawW, drawH);
+
+            // 绘制转头 — 居中略上移，使炮管在底座上方可见
+            if (totalFrames > 1) {
+                int towerH = TowerData.towerHeight(button.towerType);
+                float turretY = drawY - (towerH * scale) * 0.5f;
+                libGdxRenderer.drawSpriteFrame(sheetName, 1, totalFrames,
+                        drawX, turretY, drawW, drawH);
+            }
+        }
+
+        libGdxRenderer.end();
     }
 
     /**
@@ -630,7 +791,9 @@ public class GamePlayScreen extends GameScreen {
      * 参考 Android 原版 Display.handleEnemyDefeatedMoneyAdd
      */
     private void drawEnemyDefeatedEvents(GameRenderer renderer, int stateIndex) {
-        renderer.begin();
+        LibGdxRenderer libGdxRenderer = (LibGdxRenderer) renderer;
+        libGdxRenderer.applyCameraTransform(camera.getXBase(), camera.getYBase(), camera.getScale());
+        libGdxRenderer.begin();
 
         for (GameEvent e = gameState.getGameEventList(GameEvent.EVENT_ENEMY_DEFEATED); e != null; e = e.next) {
             int dist = stateIndex - e.var[GameEvent.VAR_ENEMY_STATE_IDX];

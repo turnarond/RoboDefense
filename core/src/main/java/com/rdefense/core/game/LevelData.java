@@ -227,6 +227,26 @@ public final class LevelData {
                 width = 20;
                 height = 12;
                 break;
+            case MIXER_LEVEL:
+                // 混合器模式：使用种子码动态生成布局
+                {
+                    MixerLevelGenerator mixer = new MixerLevelGenerator(mixer_seed, 20, 12);
+                    width = 20;
+                    height = 12;
+                    int[] starts = mixer.createStartPaths();
+                    int[] ends = mixer.createEndPaths(starts);
+                    path_start = starts;
+                    path_end = ends;
+                    // 根据 start wall_number 推导朝向
+                    path_start_orientation = new int[starts.length];
+                    for (int i = 0; i < starts.length; i++) {
+                        path_start_orientation[i] = wallToOrientation(starts[i] & 0xFF00);
+                    }
+                    // 先设置 is_fixed_path，因为 createObstacles 依赖它
+                    this.is_fixed_path = mixer.isFixedPath();
+                    path_obstacles = mixer.createObstacles(this);
+                }
+                break;
             default:
                 path_start = new int[]{774};
                 path_end = new int[]{262};
@@ -332,6 +352,21 @@ public final class LevelData {
         
         initLevelParms();
         return true;
+    }
+
+    /**
+     * 墙壁编号 → 起始朝向
+     * WALL_LEFT(256) → 朝右(1), WALL_TOP(512) → 朝下(4)
+     * WALL_RIGHT(768) → 朝左(3), WALL_BOTTOM(1024) → 朝上(2)
+     */
+    private static int wallToOrientation(int wallNumber) {
+        switch (wallNumber) {
+            case 256: return 1;   // 左墙→朝右
+            case 512: return 4;   // 上墙→朝下
+            case 768: return 3;   // 右墙→朝左
+            case 1024: return 2;  // 下墙→朝上
+            default: return 1;
+        }
     }
 
     public int getPathCount() {

@@ -52,44 +52,42 @@ public class CreditsScreen extends GameScreen {
 
     @Override
     protected void draw(float delta) {
-        GameRenderer renderer = game.getServices().getRenderer();
-        int screenWidth = renderer.getScreenWidth();
-        int screenHeight = renderer.getScreenHeight();
+        GameRenderer r = game.getServices().getRenderer();
+        int sw = r.getScreenWidth(), sh = r.getScreenHeight();
+        r.applyCameraTransform(0, 0, 1.0f);
+        r.begin();
 
-        renderer.applyCameraTransform(0, 0, 1.0f);
-        renderer.begin();
+        r.drawRect(0, 0, sw, sh, 0.03f, 0.05f, 0.12f, 1.0f);
 
-        renderer.drawRect(0, 0, screenWidth, screenHeight, 0.04f, 0.04f, 0.1f, 1.0f);
+        // 标题栏
+        r.drawRect(0, sh - 34, sw, 34, 0.06f, 0.08f, 0.16f, 0.93f);
+        r.drawRect(0, sh - 1, sw, 2, 0.2f, 0.36f, 0.55f, 0.85f);
+        r.drawText("Credits", 16, sh - 20, 0.75f, 0.85f, 0.95f, 1.0f);
 
-        // 滚动文字
-        String[] credits = new String[] {
-            "星际塔防",
-            "Robo Defense",
-            "",
-            "原作: MagicWach",
-            "移植与重构: Open Source Contributors",
-            "",
-            "使用 libGDX 引擎",
-            "www.libgdx.com",
-            "",
-            "字体: SimHei (黑体)",
-            "",
-            "本项目仅供学习交流使用",
-            "感谢所有支持者"
-        };
+        // 内容区（居中半透明面板）
+        int pw = Math.min(sw - 64, 420), ph = 260;
+        int px = (sw - pw) / 2, py = (sh - ph) / 2 - 10;
+        r.drawRect(px, py, pw, ph, 0.06f, 0.09f, 0.18f, 0.9f);
+        r.drawRect(px, py + ph - 1, pw, 1, 0.18f, 0.32f, 0.5f, 0.6f);
 
-        int y = (int) (screenHeight - 60 + scrollY);
-        for (String line : credits) {
-            renderer.drawText(line, 32, y, 0.85f, 0.85f, 0.85f, 1.0f);
-            y -= 24;
+        String[] lines = {"星际塔防", "Robo Defense", "",
+            "原作 MagicWach  |  移植 Open Source", "",
+            "libGDX 引擎  |  SimHei 字体", "",
+            "仅供学习交流使用  |  感谢所有支持者"};
+        float ty = py + ph - 30;
+        for (String s : lines) {
+            if (s.isEmpty()) { ty -= 14; continue; }
+            r.drawText(s, px + pw / 2f - s.length() * 3.5f, ty, 0.7f, 0.75f, 0.85f, 1.0f);
+            ty -= 22;
         }
-        contentHeight = screenHeight - 60 - y;
 
-        int backX = screenWidth - BUTTON_WIDTH - 16;
-        int backY = 16;
-        renderer.drawRect(backX, backY, BUTTON_WIDTH, BUTTON_HEIGHT, 0.2f, 0.2f, 0.5f, 0.9f);
-        renderer.drawText("返回", backX + 24, backY + BUTTON_HEIGHT - 14, 1.0f, 1.0f, 1.0f, 1.0f);
+        // 返回按钮
+        int bw = 100, bh = 34;
+        int bx = sw - bw - 16, by = 14;
+        r.drawRect(bx, by, bw, bh, 0.08f, 0.12f, 0.25f, 0.88f);
+        r.drawRect(bx, by + bh - 1, bw, 1, 0.2f, 0.3f, 0.5f, 0.6f);
+        r.drawText("返回", bx + 28, by + 13, 0.78f, 0.82f, 0.88f, 1.0f);
 
-        renderer.end();
+        r.end();
     }
 }

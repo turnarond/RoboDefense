@@ -4,10 +4,12 @@ import com.badlogic.gdx.Gdx;
 import com.rdefense.core.RoboDefenseGame;
 import com.rdefense.core.config.LevelNames;
 import com.rdefense.core.platform.GameRenderer;
+import com.rdefense.core.render.SpriteNames;
 import com.rdefense.core.save.PlayerPrefs;
 
 /**
- * 关卡选择场景 - 简洁稳定版
+ * 关卡选择场景 — 卡片式布局
+ * 一张大地图预览卡 + 难度滑条 + 模式开关
  */
 public class LevelSelectScreen extends GameScreen {
 
@@ -15,14 +17,38 @@ public class LevelSelectScreen extends GameScreen {
     private static final int MAX_DIFFICULTY = 10;
     private static final int LEVELS_PER_MAP = 10;
 
-    private int currentMap = 0;
-    private int currentDifficulty = 0;
-    private boolean survivalMode = false;
-    private boolean towerMixerEnabled = false;
-    private int mixerValue = 0;
-    private int towerMixerValue = 0;
-
+    private int currentMap;
+    private int currentDifficulty;
+    private boolean survivalMode;
+    private boolean towerMixerEnabled;
+    private int mixerValue;
+    private int towerMixerValue;
     private PlayerPrefs prefs;
+
+    // === 布局坐标（computeLayout 统一计算）===
+    private int sw, sh;
+
+    // 地图卡片
+    private int cardX, cardY, cardW, cardH;
+    // 左右箭头（在卡片内）
+    private int arrW = 48, arrH = 56;
+    private int arrLX, arrLY, arrRX, arrRY;
+    // 地图缩略图区域
+    private int thumbX, thumbY, thumbW, thumbH;
+
+    // 难度行
+    private int diffRowY;
+    private int diffMinusX, diffMinusW, diffPlusX, diffPlusW;
+    private int diffSliderX, diffSliderW, diffSliderY, diffSliderH;
+
+    // 模式行
+    private int modeRowY;
+    private int survChkX, survChkW, mixChkX, mixChkW;
+    private int chkSize = 36;
+
+    // 底部按钮
+    private int backX, backY, backW, backH;
+    private int startX, startY, startW, startH;
 
     public LevelSelectScreen(RoboDefenseGame game) {
         super(game);
@@ -32,6 +58,8 @@ public class LevelSelectScreen extends GameScreen {
             this.currentDifficulty = prefs.getDifficulty();
             this.survivalMode = prefs.isSurvivalMode();
             this.towerMixerEnabled = prefs.isTowerMixerEnabled();
+            this.mixerValue = prefs.getMixerValue();
+            this.towerMixerValue = prefs.getTowerMixerValue();
         }
     }
 
@@ -40,243 +68,240 @@ public class LevelSelectScreen extends GameScreen {
         Gdx.input.setCursorCatched(false);
     }
 
-    private boolean isMapUnlocked(int mapId) {
-        if (prefs == null) return true;
-        int maxLevelWon = prefs.getMaxLevelWon();
-        int unlockMap = maxLevelWon / LEVELS_PER_MAP;
-        return mapId <= unlockMap;
+    // ==================== 布局计算 ====================
+
+    private void computeLayout() {
+        sw = Gdx.graphics.getWidth();
+        sh = Gdx.graphics.getHeight();
+
+        int pad = 14;
+
+        // 地图卡片：占屏幕中上部绝大部分
+        cardX = pad;
+        cardW = sw - pad * 2;
+        cardH = Math.min(250, sh - 200);
+        cardY = sh - 34 - 16 - cardH;  // 标题栏下方 16px
+
+        // 箭头在卡片左右边缘居中
+        arrLY = cardY + (cardH - arrH) / 2;
+        arrLX = cardX + 8;
+        arrRY = arrLY;
+        arrRX = cardX + cardW - arrW - 8;
+
+        // 缩略图区域（箭头之间）
+        thumbX = arrLX + arrW + 12;
+        thumbW = arrRX - thumbX - 12;
+        thumbH = cardH - 60;
+        thumbY = cardY + 40;
+
+        // 难度行：卡片下方
+        int rowH = 44;
+        diffRowY = cardY - 8 - rowH;
+        diffMinusW = 36; diffPlusW = 36;
+        diffMinusX = pad + 60;
+        diffPlusX = sw - pad - diffPlusW - 60;
+        diffSliderX = diffMinusX + diffMinusW + 16;
+        diffSliderW = diffPlusX - diffSliderX - 16;
+        diffSliderY = diffRowY + 22;
+        diffSliderH = 6;
+
+        // 模式行
+        modeRowY = diffRowY - 4 - rowH;
+        survChkW = chkSize + 100;  // checkbox + label width
+        mixChkW = chkSize + 220;
+        survChkX = pad + 10;
+        mixChkX = survChkX + survChkW + 20;
+
+        // 底部按钮
+        backW = 110; backH = 36;
+        backX = pad; backY = 6;
+        startW = 150; startH = 42;
+        startX = sw - startW - pad; startY = 6;
     }
 
-    private boolean isMixerUnlocked() {
-        if (prefs == null) return false;
-        return mixerValue > 0 || towerMixerValue > 0;
-    }
+    // ==================== 输入处理 ====================
 
     @Override
     protected void update(float delta) {
-        if (Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.ESCAPE)) {
-            switchScreen(new MainMenuScreen(game));
+        computeLayout();
+
+        // 键盘
+        if (Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.ESCAPE))
+            { switchScreen(new MainMenuScreen(game)); return; }
+        if (Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.ENTER))
+            { onStart(); return; }
+        if (Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.LEFT))
+            { currentMap = (currentMap + MAP_COUNT - 1) % MAP_COUNT; return; }
+        if (Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.RIGHT))
+            { currentMap = (currentMap + 1) % MAP_COUNT; return; }
+        if (Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.UP))
+            { currentDifficulty = Math.min(MAX_DIFFICULTY, currentDifficulty + 1); return; }
+        if (Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.DOWN))
+            { currentDifficulty = Math.max(0, currentDifficulty - 1); return; }
+
+        if (!Gdx.input.justTouched()) return;
+        int x = Gdx.input.getX();
+        int y = sh - Gdx.input.getY(); // flip to match draw coords
+
+        // 底部按钮
+        if (hit(x, y, backX, backY, backW, backH)) { switchScreen(new MainMenuScreen(game)); return; }
+        if (hit(x, y, startX, startY, startW, startH)) { onStart(); return; }
+
+        // 地图箭头
+        if (hit(x, y, arrLX, arrLY, arrW, arrH)) { currentMap = (currentMap + MAP_COUNT - 1) % MAP_COUNT; return; }
+        if (hit(x, y, arrRX, arrRY, arrW, arrH)) { currentMap = (currentMap + 1) % MAP_COUNT; return; }
+
+        // 难度 +/-
+        if (hit(x, y, diffMinusX, diffRowY, diffMinusW, 36))
+            { currentDifficulty = Math.max(0, currentDifficulty - 1); return; }
+        if (hit(x, y, diffPlusX, diffRowY, diffPlusW, 36))
+            { currentDifficulty = Math.min(MAX_DIFFICULTY, currentDifficulty + 1); return; }
+        // 点击滑条跳转
+        if (y >= diffRowY && y <= diffRowY + 36 && x >= diffSliderX && x <= diffSliderX + diffSliderW) {
+            float pct = (float)(x - diffSliderX) / diffSliderW;
+            currentDifficulty = Math.round(pct * MAX_DIFFICULTY);
             return;
         }
-        if (Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.ENTER)) {
-            onStartPressed();
-            return;
-        }
 
-        int screenWidth = Gdx.graphics.getWidth();
-        int screenHeight = Gdx.graphics.getHeight();
-
-        if (Gdx.input.justTouched()) {
-            int x = Gdx.input.getX();
-            int y = screenHeight - Gdx.input.getY();
-
-            // 左箭头
-            if (isPointInRect(x, y, 20, screenHeight - 140, 50, 50)) {
-                currentMap = (currentMap + MAP_COUNT - 1) % MAP_COUNT;
-                return;
-            }
-            // 右箭头
-            if (isPointInRect(x, y, screenWidth - 70, screenHeight - 140, 50, 50)) {
-                currentMap = (currentMap + 1) % MAP_COUNT;
-                return;
-            }
-
-            // 难度 -
-            if (isPointInRect(x, y, screenWidth - 90, screenHeight - 260, 50, 35)) {
-                currentDifficulty = Math.max(0, currentDifficulty - 1);
-                return;
-            }
-            // 难度 +
-            if (isPointInRect(x, y, screenWidth - 90, screenHeight - 220, 50, 35)) {
-                currentDifficulty = Math.min(MAX_DIFFICULTY, currentDifficulty + 1);
-                return;
-            }
-
-            boolean mapUnlocked = isMapUnlocked(currentMap);
-            // 生存模式开关
-            if (isPointInRect(x, y, 20, screenHeight - 370, 40, 40)) {
-                if (mapUnlocked) survivalMode = !survivalMode;
-                return;
-            }
-            // 塔混合器开关
-            if (isPointInRect(x, y, 20, screenHeight - 430, 40, 40)) {
-                if (mapUnlocked && isMixerUnlocked()) towerMixerEnabled = !towerMixerEnabled;
-                return;
-            }
-
-            // 开始按钮
-            if (isPointInRect(x, y, screenWidth - 160, 20, 140, 45)) {
-                onStartPressed();
-                return;
-            }
-            // 返回按钮
-            if (isPointInRect(x, y, 20, 20, 140, 45)) {
-                switchScreen(new MainMenuScreen(game));
-                return;
-            }
-        }
-
-        // 键盘导航
-        if (Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.LEFT)) {
-            currentMap = (currentMap + MAP_COUNT - 1) % MAP_COUNT;
-        } else if (Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.RIGHT)) {
-            currentMap = (currentMap + 1) % MAP_COUNT;
-        } else if (Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.UP)) {
-            currentDifficulty = Math.min(MAX_DIFFICULTY, currentDifficulty + 1);
-        } else if (Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.DOWN)) {
-            currentDifficulty = Math.max(0, currentDifficulty - 1);
-        } else if (Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.S)) {
-            if (isMapUnlocked(currentMap)) survivalMode = !survivalMode;
-        } else if (Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.M)) {
-            if (isMapUnlocked(currentMap) && isMixerUnlocked()) towerMixerEnabled = !towerMixerEnabled;
-        }
+        // 模式开关
+        boolean u = isMapUnlocked(currentMap);
+        if (hit(x, y, survChkX, modeRowY, chkSize, chkSize)) { if (u) survivalMode = !survivalMode; return; }
+        if (hit(x, y, mixChkX, modeRowY, chkSize, chkSize)) { if (u && isMixerUnlocked()) towerMixerEnabled = !towerMixerEnabled; return; }
     }
 
-    private boolean isPointInRect(int px, int py, int rx, int ry, int rw, int rh) {
+    private boolean hit(int px, int py, int rx, int ry, int rw, int rh) {
         return px >= rx && px <= rx + rw && py >= ry && py <= ry + rh;
     }
 
-    private void onStartPressed() {
-        if (!isMapUnlocked(currentMap)) {
-            Gdx.app.log("LevelSelectScreen", "Map not unlocked: " + currentMap);
-            return;
-        }
+    // ==================== 业务逻辑 ====================
+
+    private boolean isMapUnlocked(int mapId) {
+        if (prefs == null) return true;
+        return mapId <= prefs.getMaxLevelWon() / LEVELS_PER_MAP;
+    }
+
+    private boolean isMixerUnlocked() {
+        return mixerValue > 0 || towerMixerValue > 0;
+    }
+
+    private void onStart() {
+        if (!isMapUnlocked(currentMap)) return;
         if (prefs != null) {
             prefs.putMap(currentMap);
             prefs.putDifficulty(currentDifficulty);
             prefs.putSurvivalMode(survivalMode);
             prefs.putTowerMixerEnabled(towerMixerEnabled);
         }
-        GamePlayScreen gps = new GamePlayScreen(game, false);
+        GamePlayScreen gps = new GamePlayScreen(game);
         gps.configureLevel(currentMap, currentDifficulty);
         switchScreen(gps);
     }
 
+    // ==================== 渲染 ====================
+
     @Override
     protected void draw(float delta) {
-        GameRenderer renderer = game.getServices().getRenderer();
-        int w = renderer.getScreenWidth();
-        int h = renderer.getScreenHeight();
-
-        renderer.applyCameraTransform(0, 0, 1.0f);
-        renderer.begin();
+        computeLayout();
+        GameRenderer r = game.getServices().getRenderer();
+        r.applyCameraTransform(0, 0, 1.0f);
+        r.begin();
 
         // 背景
-        renderer.drawRect(0, 0, w, h, 0.03f, 0.05f, 0.1f, 1.0f);
+        r.drawRect(0, 0, sw, sh, 0.03f, 0.05f, 0.12f, 1.0f);
 
-        int y = h - 20;
+        // 标题栏
+        r.drawRect(0, sh - 34, sw, 34, 0.06f, 0.08f, 0.16f, 0.93f);
+        r.drawRect(0, sh - 1, sw, 2, 0.2f, 0.36f, 0.55f, 0.85f);
+        r.drawText("关卡选择", 16, sh - 20, 0.75f, 0.85f, 0.95f, 1.0f);
 
-        // 标题
-        renderer.drawText("关卡选择", 20, y, 1.0f, 0.9f, 0.2f, 1.0f);
-        y -= 40;
+        boolean unlocked = isMapUnlocked(currentMap);
 
-        // 地图选择区域
-        renderer.drawRect(20, y - 100, w - 40, 100, 0.08f, 0.1f, 0.15f, 0.9f);
-        // 左箭头
-        renderer.drawRect(20, y - 75, 50, 50, 0.2f, 0.25f, 0.35f, 0.9f);
-        renderer.drawText("<", 38, y - 43, 1.0f, 1.0f, 1.0f, 1.0f);
-        // 右箭头
-        renderer.drawRect(w - 70, y - 75, 50, 50, 0.2f, 0.25f, 0.35f, 0.9f);
-        renderer.drawText(">", w - 52, y - 43, 1.0f, 1.0f, 1.0f, 1.0f);
+        // ========== 地图卡片 ==========
+        r.drawRect(cardX, cardY, cardW, cardH, 0.06f, 0.09f, 0.18f, 0.92f);
+        r.drawRect(cardX, cardY + cardH - 1, cardW, 1, 0.18f, 0.32f, 0.5f, 0.7f);
 
-        boolean mapUnlocked = isMapUnlocked(currentMap);
-        String mapName = LevelNames.getName(currentMap);
-        String mapEn = LevelNames.getEnglishName(currentMap);
-        renderer.drawText("地图 " + currentMap, w / 2 - 40, y - 30, 0.7f, 0.7f, 0.7f, 1.0f);
-        if (mapUnlocked) {
-            renderer.drawText(mapName, w / 2 - 60, y - 55, 1.0f, 1.0f, 1.0f, 1.0f);
+        // 地图缩略图
+        String bgName = SpriteNames.levelBackground(currentMap);
+        r.drawSprite(bgName, thumbX, thumbY, thumbW, thumbH);
+
+        if (!unlocked) {
+            r.drawRect(thumbX, thumbY, thumbW, thumbH, 0f, 0f, 0f, 0.6f);
+            int req = currentMap * LEVELS_PER_MAP;
+            int cur = (prefs != null) ? prefs.getMaxLevelWon() : 0;
+            r.drawText("通关 " + req + " 关解锁", cardX + cardW/2 - 50, cardY + cardH/2 + 10, 0.95f, 0.35f, 0.3f, 1.0f);
+        }
+
+        // 地图名（卡片上方）
+        String name = LevelNames.getName(currentMap);
+        String en = LevelNames.getEnglishName(currentMap);
+        float nc = unlocked ? 0.88f : 0.4f;
+        r.drawText(name, cardX + arrW + 20, cardY + cardH - 22, nc, nc, nc, 1.0f);
+        r.drawText(en, cardX + arrW + 20, cardY + cardH - 42, 0.45f, 0.55f, 0.7f, 0.9f);
+        r.drawText((currentMap+1) + "/" + MAP_COUNT, cardX + cardW - 50, cardY + cardH - 22, 0.4f, 0.5f, 0.6f, 0.8f);
+
+        // 左右箭头
+        r.drawRect(arrLX, arrLY, arrW, arrH, 0.08f, 0.15f, 0.28f, 0.88f);
+        r.drawText("<", arrLX + 18, arrLY + 20, 0.7f, 0.8f, 0.9f, 1.0f);
+        r.drawRect(arrRX, arrRY, arrW, arrH, 0.08f, 0.15f, 0.28f, 0.88f);
+        r.drawText(">", arrRX + 18, arrRY + 20, 0.7f, 0.8f, 0.9f, 1.0f);
+
+        // ========== 难度行 ==========
+        r.drawRect(diffMinusX - 10, diffRowY, diffSliderW + diffMinusW + diffPlusW + 36, 36,
+                0.06f, 0.09f, 0.18f, 0.85f);
+        // -
+        r.drawRect(diffMinusX, diffRowY + 4, diffMinusW, 28, 0.08f, 0.15f, 0.35f, 0.85f);
+        r.drawText("-", diffMinusX + 14, diffRowY + 14, 0.9f, 0.5f, 0.5f, 1.0f);
+        // 滑条
+        r.drawRect(diffSliderX, diffSliderY, diffSliderW, diffSliderH, 0.08f, 0.12f, 0.22f, 0.8f);
+        float fill = (float) currentDifficulty / MAX_DIFFICULTY;
+        r.drawRect(diffSliderX, diffSliderY, diffSliderW * fill, diffSliderH, 0.2f, 0.55f, 0.25f, 0.9f);
+        // 数值
+        r.drawText(currentDifficulty + "/" + MAX_DIFFICULTY,
+                diffSliderX + diffSliderW/2 - 14, diffRowY + 14, 0.85f, 0.88f, 0.92f, 1.0f);
+        // +
+        r.drawRect(diffPlusX, diffRowY + 4, diffPlusW, 28, 0.08f, 0.2f, 0.15f, 0.85f);
+        r.drawText("+", diffPlusX + 14, diffRowY + 14, 0.5f, 0.95f, 0.5f, 1.0f);
+
+        // ========== 模式行 ==========
+        drawToggle(r, survChkX, modeRowY, survivalMode && unlocked, "生存模式", unlocked);
+        boolean mixOk = isMixerUnlocked();
+        drawToggle(r, mixChkX, modeRowY, towerMixerEnabled && unlocked && mixOk, "塔混合器", unlocked && mixOk);
+        if (!mixOk) {
+            r.drawText("通关生存100关解锁", mixChkX + chkSize + 8, modeRowY + 12, 0.35f, 0.4f, 0.45f, 0.8f);
         } else {
-            renderer.drawText(mapName, w / 2 - 60, y - 55, 0.4f, 0.4f, 0.4f, 1.0f);
+            r.drawText("", mixChkX, modeRowY, 0, 0, 0, 0); // placeholder
         }
-        renderer.drawText(mapEn, w / 2 - 50, y - 80, 0.5f, 0.5f, 0.5f, 1.0f);
-        if (!mapUnlocked) {
-            int maxLevelWon = (prefs != null) ? prefs.getMaxLevelWon() : 0;
-            int requiredLevel = currentMap * LEVELS_PER_MAP;
-            renderer.drawText("通关 " + requiredLevel + " 关解锁（当前: " + maxLevelWon + "）", 
-                    w / 2 - 150, y - 105, 0.9f, 0.4f, 0.4f, 1.0f);
-        }
-        y -= 120;
 
-        // 难度区域
-        renderer.drawRect(20, y - 90, w - 40, 90, 0.08f, 0.1f, 0.15f, 0.9f);
-        renderer.drawText("难度设置", 30, y - 20, 0.8f, 0.8f, 0.8f, 1.0f);
-        // 数字显示
-        renderer.drawText(String.valueOf(currentDifficulty), w / 2 - 15, y - 40, 1.2f, 1.2f, 1.2f, 1.0f);
-        renderer.drawText("/ " + MAX_DIFFICULTY, w / 2 + 10, y - 40, 0.7f, 0.7f, 0.7f, 1.0f);
-        // 进度条
-        int sliderW = w - 200;
-        float filledW = (float) currentDifficulty / MAX_DIFFICULTY * sliderW;
-        renderer.drawRect(30, y - 70, sliderW, 12, 0.2f, 0.2f, 0.3f, 0.8f);
-        renderer.drawRect(30, y - 70, filledW, 12, 0.3f, 0.6f, 0.3f, 0.9f);
-        // - 按钮
-        renderer.drawRect(w - 90, y - 80, 50, 35, 0.2f, 0.2f, 0.4f, 0.9f);
-        renderer.drawText("-", w - 75, y - 58, 1.0f, 0.5f, 0.5f, 1.0f);
-        // + 按钮
-        renderer.drawRect(w - 90, y - 40, 50, 35, 0.2f, 0.4f, 0.2f, 0.9f);
-        renderer.drawText("+", w - 75, y - 18, 0.5f, 1.0f, 0.5f, 1.0f);
-        y -= 110;
-
-        // 模式区域（增大面板高度，避免重叠）
-        renderer.drawRect(20, y - 120, w - 40, 120, 0.08f, 0.1f, 0.15f, 0.9f);
-        renderer.drawText("游戏模式", 30, y - 15, 0.8f, 0.8f, 0.8f, 1.0f);
-
-        // 生存模式（向下移动，与标题保持足够间距）
-        int survY = y - 50;
-        if (survivalMode && mapUnlocked) {
-            renderer.drawRect(20, survY - 25, 40, 40, 0.15f, 0.5f, 0.15f, 0.9f);
-            renderer.drawText("OK", 30, survY - 5, 1.0f, 1.0f, 1.0f, 1.0f);
-        } else {
-            renderer.drawRect(20, survY - 25, 40, 40, 0.2f, 0.25f, 0.35f, 0.9f);
-        }
-        renderer.drawText("生存模式", 70, survY - 5, 
-                mapUnlocked ? 0.8f : 0.4f, mapUnlocked ? 0.8f : 0.4f, mapUnlocked ? 0.8f : 0.4f, 1.0f);
-
-        // 塔混合器（向下移动，与生存模式保持足够间距）
-        int mixY = y - 100;
-        if (isMixerUnlocked()) {
-            if (towerMixerEnabled && mapUnlocked) {
-                renderer.drawRect(20, mixY - 25, 40, 40, 0.15f, 0.5f, 0.15f, 0.9f);
-                renderer.drawText("OK", 30, mixY - 5, 1.0f, 1.0f, 1.0f, 1.0f);
-            } else {
-                renderer.drawRect(20, mixY - 25, 40, 40, 0.2f, 0.25f, 0.35f, 0.9f);
-            }
-            renderer.drawText("塔混合器", 70, mixY - 5, 
-                    mapUnlocked ? 0.8f : 0.4f, mapUnlocked ? 0.8f : 0.4f, mapUnlocked ? 0.8f : 0.4f, 1.0f);
-        } else {
-            renderer.drawRect(20, mixY - 25, 40, 40, 0.2f, 0.2f, 0.2f, 0.6f);
-            renderer.drawText("?", 35, mixY - 5, 0.5f, 0.5f, 0.5f, 1.0f);
-            renderer.drawText("塔混合器（未解锁）", 70, mixY - 5, 0.5f, 0.5f, 0.5f, 1.0f);
-            renderer.drawText("通关 VR Training 地图解锁", 70, mixY - 25, 0.4f, 0.4f, 0.4f, 1.0f);
-        }
-        y -= 140;
-
-        // 存档提示（移到快捷键提示上方）
+        // 存档警告
         if (game.getGameSaveManager() != null && game.getGameSaveManager().hasQuickSave()) {
-            renderer.drawText("注意：开始新游戏将清除现有快速存档", 
-                    20, y - 10, 0.9f, 0.6f, 0.3f, 1.0f);
-            y -= 30;
+            r.drawText("开始新游戏将清除快速存档", cardX + cardW/2 - 90, diffRowY - 22, 0.85f, 0.55f, 0.25f, 0.9f);
         }
 
-        // 提示区（继续下移）
-        renderer.drawRect(20, y - 50, w - 40, 50, 0.05f, 0.05f, 0.08f, 0.7f);
-        renderer.drawText("方向键: 切换地图/调整难度  S: 生存模式  M: 塔混合器", 
-                30, y - 20, 0.5f, 0.5f, 0.5f, 1.0f);
-        renderer.drawText("Enter: 开始游戏  ESC: 返回主菜单", 
-                w - 220, y - 20, 0.5f, 0.5f, 0.5f, 1.0f);
-        y -= 80;
+        // ========== 底部按钮 ==========
+        r.drawRect(backX, backY, backW, backH, 0.08f, 0.12f, 0.25f, 0.88f);
+        r.drawRect(backX, backY + backH - 1, backW, 1, 0.2f, 0.3f, 0.5f, 0.6f);
+        r.drawText("返回", backX + backW/2 - 12, backY + 15, 0.78f, 0.82f, 0.88f, 1.0f);
 
-        // 底部按钮
-        // 返回
-        renderer.drawRect(20, 20, 140, 45, 0.25f, 0.25f, 0.35f, 0.9f);
-        renderer.drawText("返回", 60, 48, 1.0f, 1.0f, 1.0f, 1.0f);
-        // 开始
-        boolean canStart = isMapUnlocked(currentMap);
-        float sR = canStart ? 0.15f : 0.3f;
-        float sG = canStart ? 0.55f : 0.3f;
-        float sB = canStart ? 0.15f : 0.3f;
-        renderer.drawRect(w - 160, 20, 140, 45, sR, sG, sB, 0.9f);
-        renderer.drawText("开始游戏", w - 125, 48, 1.0f, 1.0f, 1.0f, 1.0f);
+        float sr = unlocked ? 0.08f : 0.18f, sg = unlocked ? 0.28f : 0.15f, sb = unlocked ? 0.12f : 0.1f;
+        r.drawRect(startX, startY, startW, startH, sr, sg, sb, 0.92f);
+        r.drawRect(startX, startY + startH - 2, startW, 2,
+                unlocked ? 0.3f : 0.15f, unlocked ? 0.55f : 0.2f, unlocked ? 0.2f : 0.15f, 0.8f);
+        r.drawText("开始游戏", startX + startW/2 - 22, startY + 18,
+                unlocked ? 0.82f : 0.45f, unlocked ? 0.88f : 0.45f, unlocked ? 0.85f : 0.45f, 1.0f);
 
-        renderer.end();
+        r.end();
+    }
+
+    /** 绘制开关组件（方框 + 标签） */
+    private void drawToggle(GameRenderer r, int x, int y, boolean on, String label, boolean enabled) {
+        float cr = enabled ? (on ? 0.12f : 0.1f) : 0.1f;
+        float cg = enabled ? (on ? 0.45f : 0.15f) : 0.1f;
+        float cb = enabled ? (on ? 0.18f : 0.25f) : 0.1f;
+        r.drawRect(x, y, chkSize, chkSize, cr, cg, cb, 0.85f);
+        if (on) {
+            r.drawText("ON", x + 6, y + 14, 0.5f, 0.9f, 0.5f, 1.0f);
+        }
+        float lr = enabled ? 0.75f : 0.4f, lg = enabled ? 0.82f : 0.4f, lb = enabled ? 0.9f : 0.4f;
+        r.drawText(label, x + chkSize + 8, y + 14, lr, lg, lb, 1.0f);
     }
 }

@@ -1,5 +1,7 @@
 package com.rdefense.core.game;
 
+import java.util.List;
+
 /**
  * 移动网格 — 计算敌人移动路径
  * 对应原版 MovementGrid，使用从终点反向BFS的路径finding算法
@@ -126,6 +128,94 @@ public final class MovementGrid {
     /**
      * 检查塔放置是否阻挡路径
      */
+    /**
+     * 检查障碍物布局是否有效（混合器模式使用）
+     * 在已有的障碍物列表基础上，验证新增障碍物后路径仍可达
+     *
+     * @param currentList 已有的障碍物列表
+     * @param newPosition 新障碍物的编码 (x<<24 | y<<16 | w<<8 | h)
+     * @return true 如果路径仍然可达
+     */
+    public boolean checkObstacleLayout(List<Integer> currentList, int newPosition) {
+        byte[] trialGrid = new byte[grid.length];
+        boolean ok = initGridTrial(trialGrid);
+
+        if (ok) {
+            for (int i = 0; ok && i < currentList.size(); i++) {
+                ok = addObstacleToTrial(trialGrid, currentList.get(i));
+            }
+        }
+        if (ok) {
+            ok = addObstacleToTrial(trialGrid, newPosition);
+        }
+        if (ok) {
+            // 终点标记为可通过
+            trialGrid[gridW * endY + endX] = CELL_EMPTY;
+            return findPathGreedy(trialGrid, false);
+        }
+        return false;
+    }
+
+    /**
+     * 初始化试验网格（用于 checkObstacleLayout，不需要塔列表参数）
+     */
+    private boolean initGridTrial(byte[] trialGrid) {
+        int offset = gridW * (gridH - 1);
+
+        if (isFixedPath) {
+            for (int i = 0; i < trialGrid.length; i++) {
+                trialGrid[i] = CELL_FIXED;
+            }
+        } else {
+            for (int i = 0; i < trialGrid.length; i++) {
+                trialGrid[i] = CELL_EMPTY;
+            }
+        }
+
+        // 标记边界
+        for (int x = 0; x < gridW; x++) {
+            trialGrid[x] = CELL_BORDER;
+            trialGrid[offset + x] = CELL_BORDER;
+        }
+        int offset2 = gridW - 1;
+        for (int y = 1; y < gridH; y++) {
+            trialGrid[gridW * y] = CELL_BORDER;
+            trialGrid[gridW * y + offset2] = CELL_BORDER;
+        }
+
+        // 标记关卡障碍物
+        int obsCount = levelData.getObstacleCount();
+        for (int i = 0; i < obsCount; i++) {
+            initObstacle(trialGrid, i, isFixedPath ? CELL_EMPTY : CELL_OBSTACLE);
+        }
+
+        // 标记出口
+        trialGrid[endY * gridW + endX] = CELL_EXIT;
+        return true;
+    }
+
+    /**
+     * 在试验网格中添加一个障碍物
+     */
+    private boolean addObstacleToTrial(byte[] trialGrid, int position) {
+        int sx = (position >> 24) & 0xFF;
+        int sy = (position >> 16) & 0xFF;
+        int sw = (position >> 8) & 0xFF;
+        int sh = position & 0xFF;
+        int x2 = sx + sw;
+        int y2 = sy + sh;
+        for (int y = sy; y < y2; y++) {
+            for (int x = sx; x < x2; x++) {
+                if (trialGrid[gridW * y + x] == CELL_EMPTY) {
+                    trialGrid[gridW * y + x] = CELL_OBSTACLE;
+                } else {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
     public boolean checkTowerPlacement(GameTower tower_list, Enemy enemy_list,
                                         int towerX, int towerY, int pathIdx, boolean isBlocking) {
         if (!isBlocking) return true;

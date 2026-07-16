@@ -232,6 +232,14 @@ public final class RewardData {
         return reward_props[type].description;
     }
 
+    /**
+     * 获取奖励等级（等价于原版 RewardData.rewardLevel）
+     * @return 奖励等级，0 表示未解锁/未升级
+     */
+    public static int rewardLevel(int type) {
+        return getLevel(type);
+    }
+
     public static boolean isUnlockable(int type) {
         if (type < 0 || type >= REWARD_TYPE_COUNT) return false;
         return reward_props[type].type == TYPE_UNLOCK;

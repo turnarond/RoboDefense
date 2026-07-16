@@ -185,37 +185,57 @@ public class Enemy extends GridObject {
     }
 
     /**
-     * 应用伤害
+     * 应用伤害（精确匹配原版 applyDamage 逻辑）
+     *
+     * 伤害类型对照：
+     *   4  = 减速弹（仅减速，无伤害）
+     *   6  = 火焰弹（仅灼烧，无直接伤害）
+     *   12 = 穿甲弹/铀弹（无视护甲）
+     *   13 = 凝固汽油弹（部分灼烧 + 常规伤害）
+     *   14 = 冲击波/缓慢火焰弹（灼烧 + 减速）
      */
     public void applyDamage(int amount, int shot_type) {
+        // 减速弹：仅施加减速效果，无伤害
         if (shot_type == 4 || shot_type == BulletData.SLOW) {
-            // 减速弹：使用塔的 power 值作为减速持续时间（原版逻辑）
             this.slow_counter = amount;
             return;
         }
+        // 火焰弹/冲击波：施加灼烧效果（无直接伤害）
         if (shot_type == 6 || shot_type == 14 || shot_type == BulletData.SLOW_FIRE) {
-            // 火焰弹/冲击波/缓慢火焰弹
+            int oldFire = this.fire_counter;
             this.fire_counter += 4;
             if (this.fire_counter > amount) {
-                this.fire_counter = amount;
+                this.fire_counter = Math.max(oldFire, amount); // 不缩短已有灼烧
+            }
+            // 类型14（冲击波/缓慢火焰弹）同时施加减速效果
+            if ((shot_type == 14 || shot_type == BulletData.SLOW_FIRE) && this.slow_counter < amount) {
+                this.slow_counter = amount;
+            }
+            // 触发火焰粒子
+            if (this.fire_counter > 0 && this.health > 0) {
+                addFlame();
             }
             return;
         }
+        // 凝固汽油弹：部分灼烧（无直接伤害以外的处理，继续走常规伤害）
         if (shot_type == 13 || shot_type == BulletData.NAPALM_SHELL) {
-            // 缓慢弹（另一种减速）
-            this.slow_counter = amount;
             this.fire_counter += amount / 4;
         }
 
-        // 普通伤害
-        amount -= EnemyData.armor(this.type);
+        // 穿甲弹（类型12 / URANIUM_BULLET）无视护甲
+        if (shot_type != 12 && shot_type != BulletData.URANIUM_BULLET) {
+            amount -= EnemyData.armor(this.type);
+        }
         if (amount < 1) {
             amount = 1;
         }
         this.health -= amount;
-
-        // 火焰效果
-        if ((shot_type == 10 || shot_type == 6) && this.fire_counter > 0 && this.health > 0) {
+        if (this.health < 0) {
+            this.health = 0;
+        }
+        // 火焰/凝固汽油弹命中时产生火焰粒子
+        if ((shot_type == BulletData.FIRE || shot_type == BulletData.SLOW_FIRE ||
+             shot_type == BulletData.NAPALM_SHELL) && this.fire_counter > 0 && this.health > 0) {
             addFlame();
         }
     }
@@ -301,6 +321,7 @@ public class Enemy extends GridObject {
     public int getPathNum() { return this.path_num; }
     public int getSlowCounter() { return this.slow_counter; }
     public int getFireCounter() { return this.fire_counter; }
+    public void setFireCounter(int counter) { this.fire_counter = counter; }
     public int getFlameCount() {
         int count = 0;
         if (this.flame_props != null) {

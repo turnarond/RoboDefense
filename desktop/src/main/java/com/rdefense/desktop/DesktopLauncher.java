@@ -40,6 +40,7 @@ public class DesktopLauncher {
         config.setResizable(false);
         config.useVsync(true);
         config.setForegroundFPS(60);
+        config.setWindowIcon("images/icon.png");
 
         new Lwjgl3Application(new RoboDefenseGame(new DesktopPlatformServices()), config);
     }

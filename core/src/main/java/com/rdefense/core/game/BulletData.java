@@ -28,6 +28,9 @@ public final class BulletData {
     // 溅射半径平方
     public static final int SPLASH_RADIUS_SQ = 2500;
 
+    // 地雷爆炸半径平方（与原版一致）
+    public static final int MINE_RADIUS_SQ = 2500;
+
     // 减速持续时间（帧）
     public static final int SLOW_DURATION = 120;
 
@@ -65,21 +68,22 @@ public final class BulletData {
      *   shell_large.png:  70x70  → size=70
      *   uranium_bullet.png: 70x70 → size=70
      */
+    /** 子弹尺寸（已适配 32px 网格，原版基于 70px HD 网格） */
     public static int size(int type) {
         switch (type) {
-            case GUN: return 35;            // bullet_small.png 帧高度
-            case BIG_BULLET: return 70;     // bullet_large.png 帧高度
-            case SLOW: return 6;            // 无精灵图，用颜色绘制
-            case ROCKET: return 39;         // rocket.png 帧高度（1248/32=39）
-            case FIRE: return 10;           // 无精灵图，用颜色绘制
-            case AABULLET: return 70;       // bullet_large.png 帧高度
-            case SURFAIR: return 70;        // missile.png 帧高度（2240/32=70）
-            case MORTAR: return 35;         // shell_small.png 帧高度
-            case ARTILLERY: return 70;      // shell_large.png 帧高度
-            case MINE: return 10;           // 无精灵图
-            case URANIUM_BULLET: return 70; // uranium_bullet.png 帧高度
-            case NAPALM_SHELL: return 70;   // shell_large.png 帧高度
-            case SLOW_FIRE: return 15;      // 无精灵图，用颜色绘制
+            case GUN: return 16;            // 小机枪弹
+            case BIG_BULLET: return 24;     // 大子弹
+            case SLOW: return 6;            // 减速弹（无精灵图）
+            case ROCKET: return 20;         // 火箭
+            case FIRE: return 10;           // 火焰弹（无精灵图）
+            case AABULLET: return 20;       // 防空弹（原 70，适配 32px 网格）
+            case SURFAIR: return 28;        // 地对空导弹（原 70）
+            case MORTAR: return 16;         // 迫击炮
+            case ARTILLERY: return 24;      // 火炮
+            case MINE: return 10;           // 地雷（无精灵图）
+            case URANIUM_BULLET: return 20; // 铀弹
+            case NAPALM_SHELL: return 24;   // 凝固汽油弹
+            case SLOW_FIRE: return 12;      // 冲击波（无精灵图）
             default: return 6;
         }
     }

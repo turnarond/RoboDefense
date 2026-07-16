@@ -10,14 +10,11 @@ import com.rdefense.core.platform.GameRenderer;
  */
 public class OptionsScreen extends GameScreen {
 
-    private static final int ROW_HEIGHT = 40;
-    private static final int ROW_PADDING = 8;
-    private static final int TITLE_HEIGHT = 60;
-    private static final int BUTTON_WIDTH = 120;
-    private static final int BUTTON_HEIGHT = 40;
+    private static final int ROW_HEIGHT = 38;
+    private static final int ROW_SPACING = 44;
 
     private final OptionsData options;
-    private int pressedIndex = -1;
+    private int sw, sh, backX, backY, backW, backH;
 
     public OptionsScreen(RoboDefenseGame game) {
         super(game);
@@ -29,74 +26,72 @@ public class OptionsScreen extends GameScreen {
         Gdx.input.setCursorCatched(false);
     }
 
+    private void computeLayout() {
+        sw = Gdx.graphics.getWidth();
+        sh = Gdx.graphics.getHeight();
+        backW = 100; backH = 34;
+        backX = sw - backW - 16; backY = 14;
+    }
+
     @Override
     protected void update(float delta) {
+        computeLayout();
         if (Gdx.input.justTouched()) {
             int x = Gdx.input.getX();
-            int y = Gdx.graphics.getHeight() - Gdx.input.getY();
-            int screenWidth = Gdx.graphics.getWidth();
-            int screenHeight = Gdx.graphics.getHeight();
+            int y = sh - Gdx.input.getY();
 
-            int backX = screenWidth - BUTTON_WIDTH - 16;
-            int backY = 16;
-            if (x >= backX && x <= backX + BUTTON_WIDTH && y >= backY && y <= backY + BUTTON_HEIGHT) {
-                switchScreen(new MainMenuScreen(game));
-                return;
+            if (hit(x, y, backX, backY, backW, backH)) {
+                switchScreen(new MainMenuScreen(game)); return;
             }
 
-            int optionCount = OptionsData.OPTION_TYPE_COUNT;
-            int startY = screenHeight - TITLE_HEIGHT - ROW_PADDING;
-            for (int i = 0; i < optionCount; i++) {
-                int rowY = startY - i * (ROW_HEIGHT + ROW_PADDING) - ROW_HEIGHT;
-                if (y >= rowY && y <= rowY + ROW_HEIGHT) {
-                    boolean updated = options.setOptionValue(i, !options.optionValue(i));
-                    if (updated) {
-                        game.applyOptions();
-                    }
+            int startY = sh - 60;
+            for (int i = 0; i < OptionsData.OPTION_TYPE_COUNT; i++) {
+                int rowY = startY - i * ROW_SPACING;
+                if (hit(x, y, 16, rowY, sw - 32, ROW_HEIGHT)) {
+                    if (options.setOptionValue(i, !options.optionValue(i))) game.applyOptions();
                     return;
                 }
             }
         }
-
         if (Gdx.input.isKeyPressed(com.badlogic.gdx.Input.Keys.ESCAPE)) {
             switchScreen(new MainMenuScreen(game));
         }
     }
 
+    private boolean hit(int px, int py, int rx, int ry, int rw, int rh) {
+        return px >= rx && px <= rx + rw && py >= ry && py <= ry + rh;
+    }
+
     @Override
     protected void draw(float delta) {
-        GameRenderer renderer = game.getServices().getRenderer();
-        int screenWidth = renderer.getScreenWidth();
-        int screenHeight = renderer.getScreenHeight();
+        computeLayout();
+        GameRenderer r = game.getServices().getRenderer();
+        r.applyCameraTransform(0, 0, 1.0f);
+        r.begin();
 
-        renderer.applyCameraTransform(0, 0, 1.0f);
-        renderer.begin();
+        r.drawRect(0, 0, sw, sh, 0.03f, 0.05f, 0.12f, 1.0f);
 
-        renderer.drawRect(0, 0, screenWidth, screenHeight, 0.02f, 0.02f, 0.06f, 1.0f);
-        renderer.drawText("设置", 24, screenHeight - 24, 1.0f, 0.9f, 0.7f, 1.0f);
-        renderer.drawText("点击切换选项，Esc 或 返回 返回主菜单", 24, screenHeight - 52, 0.8f, 0.8f, 0.8f, 1.0f);
+        // 标题栏
+        r.drawRect(0, sh - 34, sw, 34, 0.06f, 0.08f, 0.16f, 0.93f);
+        r.drawRect(0, sh - 1, sw, 2, 0.2f, 0.36f, 0.55f, 0.85f);
+        r.drawText("设置", 16, sh - 20, 0.75f, 0.85f, 0.95f, 1.0f);
 
-        int startY = screenHeight - TITLE_HEIGHT - ROW_PADDING;
+        // 选项列表（与 update 坐标完全一致）
+        int startY = sh - 60;
         for (int i = 0; i < OptionsData.OPTION_TYPE_COUNT; i++) {
-            int rowY = startY - i * (ROW_HEIGHT + ROW_PADDING) - ROW_HEIGHT;
-            boolean value = options.optionValue(i);
-            float itemR = value ? 0.12f : 0.12f;
-            float itemG = value ? 0.5f : 0.12f;
-            float itemB = value ? 0.12f : 0.12f;
-            float itemA = 0.8f;
-            renderer.drawRect(16, rowY, screenWidth - 32, ROW_HEIGHT, itemR, itemG, itemB, itemA);
-
-            String label = options.optionName(i);
-            renderer.drawText(label, 28, rowY + ROW_HEIGHT - 14, 1.0f, 1.0f, 1.0f, 1.0f);
-            String state = value ? "开" : "关";
-            renderer.drawText(state, screenWidth - 52, rowY + ROW_HEIGHT - 14, 0.9f, 0.9f, 0.9f, 1.0f);
+            int rowY = startY - i * ROW_SPACING;
+            boolean v = options.optionValue(i);
+            float rowR = v ? 0.1f : 0.08f, rowG = v ? 0.25f : 0.12f, rowB = v ? 0.15f : 0.18f;
+            r.drawRect(16, rowY, sw - 32, ROW_HEIGHT, rowR, rowG, rowB, 0.85f);
+            r.drawRect(16, rowY + ROW_HEIGHT - 1, sw - 32, 1, v ? 0.2f : 0.12f, v ? 0.4f : 0.2f, v ? 0.28f : 0.25f, 0.5f);
+            r.drawText(options.optionName(i), 28, rowY + 14, 0.8f, 0.84f, 0.9f, 1.0f);
+            r.drawText(v ? "开" : "关", sw - 48, rowY + 14, v ? 0.3f : 0.55f, v ? 0.9f : 0.5f, v ? 0.35f : 0.5f, 1.0f);
         }
 
-        int backX = screenWidth - BUTTON_WIDTH - 16;
-        int backY = 16;
-        renderer.drawRect(backX, backY, BUTTON_WIDTH, BUTTON_HEIGHT, 0.2f, 0.2f, 0.5f, 0.9f);
-        renderer.drawText("返回", backX + 24, backY + BUTTON_HEIGHT - 14, 1.0f, 1.0f, 1.0f, 1.0f);
+        r.drawRect(backX, backY, backW, backH, 0.08f, 0.12f, 0.25f, 0.88f);
+        r.drawRect(backX, backY + backH - 1, backW, 1, 0.2f, 0.3f, 0.5f, 0.6f);
+        r.drawText("返回", backX + backW/2 - 12, backY + 13, 0.78f, 0.82f, 0.88f, 1.0f);
 
-        renderer.end();
+        r.end();
     }
 }

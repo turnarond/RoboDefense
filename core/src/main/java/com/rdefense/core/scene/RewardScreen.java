@@ -92,27 +92,23 @@ public class RewardScreen extends GameScreen implements InputProcessor {
         renderer.begin();
 
         // 背景
-        renderer.drawRect(0, 0, screenWidth, screenHeight, 0.03f, 0.03f, 0.08f, 1.0f);
+        renderer.drawRect(0, 0, screenWidth, screenHeight, 0.03f, 0.05f, 0.12f, 1.0f);
 
-        // 标题栏背景
-        renderer.drawRect(0, screenHeight - 60, screenWidth, 60, 0.06f, 0.06f, 0.12f, 1.0f);
+        // 标题栏
+        renderer.drawRect(0, screenHeight - 34, screenWidth, 34, 0.06f, 0.08f, 0.16f, 0.93f);
+        renderer.drawRect(0, screenHeight - 1, screenWidth, 2, 0.2f, 0.36f, 0.55f, 0.85f);
+        renderer.drawText("奖励商店", 16, screenHeight - 20, 0.75f, 0.85f, 0.95f, 1.0f);
 
-        // 标题
-        renderer.drawText("奖励商店", 20, screenHeight - 22, 1.1f, 0.95f, 0.7f, 1.0f);
-
-        // 积分
         long points = RewardData.getRewardPoints();
-        renderer.drawText("积分: " + formatPoints(points), 160, screenHeight - 22, 0.9f, 0.9f, 0.3f, 1.0f);
-
-        // 奖励总数
-        renderer.drawText("共 " + RewardData.REWARD_TYPE_COUNT + " 项", screenWidth - 100, screenHeight - 22, 0.7f, 0.7f, 0.7f, 1.0f);
+        renderer.drawText("积分 " + formatPoints(points), 140, screenHeight - 20, 0.82f, 0.75f, 0.28f, 1.0f);
+        renderer.drawText("共 " + RewardData.REWARD_TYPE_COUNT + " 项", screenWidth - 90, screenHeight - 20, 0.45f, 0.5f, 0.6f, 0.8f);
 
         // 列表表头
-        renderer.drawRect(0, screenHeight - 60, screenWidth, 1, 0.2f, 0.25f, 0.35f, 0.9f);
-        renderer.drawText("奖励名称", 16, screenHeight - 80, 0.7f, 0.6f, 0.6f, 1.0f);
-        renderer.drawText("等级", 200, screenHeight - 80, 0.6f, 0.6f, 0.6f, 1.0f);
-        renderer.drawText("效果描述", 320, screenHeight - 80, 0.6f, 0.6f, 0.6f, 1.0f);
-        renderer.drawText("操作", screenWidth - 100, screenHeight - 80, 0.6f, 0.6f, 0.6f, 1.0f);
+        renderer.drawRect(12, screenHeight - 52, screenWidth - 24, 1, 0.12f, 0.2f, 0.35f, 0.5f);
+        renderer.drawText("名称", 16, screenHeight - 62, 0.5f, 0.55f, 0.65f, 0.9f);
+        renderer.drawText("等级", 200, screenHeight - 62, 0.5f, 0.55f, 0.65f, 0.9f);
+        renderer.drawText("效果", 320, screenHeight - 62, 0.5f, 0.55f, 0.65f, 0.9f);
+        renderer.drawText("操作", screenWidth - 100, screenHeight - 62, 0.5f, 0.55f, 0.65f, 0.9f);
 
         // 渲染奖励列表
         rewardRenderer.drawRewardGrid(renderer, scrollOffset, points);

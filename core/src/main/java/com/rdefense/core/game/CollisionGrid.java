@@ -63,8 +63,8 @@ public final class CollisionGrid {
      * 因为 TowerData.attackRadius 也是基于格子坐标计算的
      */
     public void setupGrid(GameTower tower) {
-        int towerX = tower.getGridX() * 32; // 格子左上角的像素 X
-        int towerY = tower.getGridY() * 32; // 格子左上角的像素 Y
+        int towerX = tower.getGridX() * 32 + 16; // 格子中心 X，+16=半格偏移
+        int towerY = tower.getGridY() * 32 + 16; // 格子中心 Y
         int radius = TowerData.attackRadius(tower.getType());
         
         int left = (towerX - radius) / CGRID_PIXEL_SIZE;

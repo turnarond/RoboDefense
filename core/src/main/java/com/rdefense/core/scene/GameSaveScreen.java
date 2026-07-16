@@ -167,14 +167,15 @@ public class GameSaveScreen extends GameScreen {
         GameSaveManager manager = game.getGameSaveManager();
         if (manager == null) return;
 
-        com.rdefense.core.game.GameState state = new com.rdefense.core.game.GameState(1, 0, false);
-        if (manager.loadSave(slotId, state)) {
-            GamePlayScreen gps = new GamePlayScreen(game, true);
-            switchScreen(gps);
-            showSuccess("存档加载成功");
-        } else {
-            showError("存档加载失败");
+        // 验证存档数据存在
+        if (!manager.hasSave(slotId)) {
+            showError("存档不存在");
+            return;
         }
+
+        GamePlayScreen gps = new GamePlayScreen(game);
+        gps.setLoadSlot(slotId);
+        switchScreen(gps);
     }
 
     private void saveToSlot(int slotId) {
@@ -222,11 +223,13 @@ public class GameSaveScreen extends GameScreen {
         renderer.begin();
 
         // 背景
-        renderer.drawRect(0, 0, w, h, 0.03f, 0.05f, 0.1f, 1.0f);
+        renderer.drawRect(0, 0, w, h, 0.03f, 0.05f, 0.12f, 1.0f);
 
-        // 标题
+        // 标题栏
+        renderer.drawRect(0, h - 34, w, 34, 0.06f, 0.08f, 0.16f, 0.93f);
+        renderer.drawRect(0, h - 1, w, 2, 0.2f, 0.36f, 0.55f, 0.85f);
         String title = mode == MODE_LOAD ? "加载存档" : "保存游戏";
-        renderer.drawText(title, 20, h - 20, 1.0f, 0.9f, 0.2f, 1.0f);
+        renderer.drawText(title, 16, h - 20, 0.75f, 0.85f, 0.95f, 1.0f);
 
         // 存档列表区域
         int listY = h - 80;

@@ -12,7 +12,7 @@ public class Bullet {
     private static final int SMOKE_NUM_STATES = 10;
     private static final int SMOKE_SIZE = 3;
     private static final int SMOKE_SLOWDOWN_THRESHOLD = 30;
-    private static final int Z_ACCEL = -4;
+    private static final int Z_ACCEL = 4; // 重力加速度（正值=向下）
     private static final int Z_SCALE = 250;
 
     // 子弹状态
@@ -99,7 +99,7 @@ public class Bullet {
             case BulletData.SURFAIR:    // 导弹，烟尾
                 // 添加烟尾粒子
                 if (game_state.activeEventCount() < 400 &&
-                        (game_state.activeEventCount() < 50 || (state_index & 3) == 0)) {
+                        (game_state.activeEventCount() < PerformanceMonitor.maxSmokeParticles() || (state_index & 3) == 0)) {
                     addSmokeParticle(game_state, state_index);
                 }
                 break;

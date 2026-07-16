@@ -151,6 +151,22 @@ public class PlayerPrefs {
         putBool(TOWER_MIXER_ENABLED, enabled);
     }
 
+    public int getMixerValue() {
+        return getInt("mixer_value", 0);
+    }
+
+    public void putMixerValue(int value) {
+        putInt("mixer_value", value);
+    }
+
+    public int getTowerMixerValue() {
+        return getInt("tower_mixer_value", 0);
+    }
+
+    public void putTowerMixerValue(int value) {
+        putInt("tower_mixer_value", value);
+    }
+
     /** 是否存在快速存档 */
     public boolean isQuickSaveAvailable() {
         return getBool(QUICK_SAVE_AVAIL_PREF_STR, false);

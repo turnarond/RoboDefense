@@ -49,7 +49,7 @@ public final class SpriteNames {
         }
     }
 
-    /** 获取塔的精灵图名称（根据类型自动判断级别） */
+    /** 获取塔的精灵图名称（根据类型自动判断级别，名称必须与 assets/images/ 中文件名一致） */
     public static String tower(int type) {
         switch (type) {
             // 机枪塔系列
@@ -67,25 +67,23 @@ public final class SpriteNames {
             // 火焰塔系列
             case 10: return "flame_tower";
             case 11: return "flame_tower2";
-            case 12: return "flame_tower3";
             // 防空塔系列
-            case 13: return "aa_tower";
-            // 导弹塔系列
+            case 12: return "aa_tower";
+            case 13: return "aa_tower2";
+            // 地对空导弹系列
             case 14: return "sam_tower";
             case 15: return "sam_tower2";
             // 迫击炮系列
-            case 16: return "mortar_tower";
-            case 17: return "mortar_tower2";
-            // 传送塔
-            case 18: return "teleport_tower";
-            // 地雷
-            case 19: return "mine";
-            // 照明弹
-            case 20: return "flare_tower";
-            // 铀弹塔
-            case 21: return "uranium_tower";
-            // 凝固汽油弹塔
-            case 22: return "napalm_tower";
+            case 16: return "mortar";
+            case 17: return "artillery";
+            // 传送塔系列
+            case 18: return "teleport_tower_unarmed";
+            case 19: return "teleport_tower_armed";
+            // 地雷系列
+            case 20: return "mine_unarmed";
+            case 21: return "mine_armed";
+            // 火炬塔
+            case 22: return "flare";
             default: return "gun_tower";
         }
     }

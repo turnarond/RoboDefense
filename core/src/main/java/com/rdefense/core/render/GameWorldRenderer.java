@@ -117,8 +117,6 @@ public class GameWorldRenderer {
         int totalFrames = TowerData.getTotalFrames(type);
         String sheetName = TowerData.getImageSheetName(type);
 
-        System.out.println("[Tower] type=" + type + " dir=" + direction + "° frame=" + frameIndex + "/" + totalFrames);
-
         int gridPixelSize = getGridPixelSize();
         float worldX = tower.getGridX() * gridPixelSize;
         float worldY = tower.getGridY() * gridPixelSize;

@@ -65,6 +65,11 @@ public final class GameState {
     private boolean no_slow_towers_created = true;
     private boolean no_rocket_towers_created = true;
 
+    // 成就追踪标志
+    private boolean cheapskate = true;     // 是否从未升级塔
+    private boolean no_sale = true;        // 是否从未出售塔
+    private int fast_fwd_counter = 0;      // 快进通关关卡计数
+
     /**
      * 创建游戏状态
      */
@@ -93,6 +98,16 @@ public final class GameState {
         this.bullet_list = null;
         this.tower_list = null;
         this.unit_created_this_level = false;
+        // 重置成就追踪标志
+        this.cheapskate = true;
+        this.no_sale = true;
+        this.fast_fwd_counter = 0;
+        this.only_one_tower_created = true;
+        this.no_gun_towers_created = true;
+        this.no_slow_towers_created = true;
+        this.no_rocket_towers_created = true;
+        this.tower_powup_counter = 0;
+        this.towers_allocated = 0;
         this.event_pool = null;
         this.events_allocated = 0;
         this.active_events = 0;
@@ -207,7 +222,8 @@ public final class GameState {
         // 播放敌人被击败音效
         com.rdefense.core.audio.SoundManager.getInstance().playEnemyDefeated();
 
-        int base_score_add = (ge.getMaxHealth() * this.level_data.getScoreMultiplier()) / 100;
+        int base_score_add = Math.max(1, (ge.getMaxHealth() * this.level_data.getScoreMultiplier()) / 100);
+        int kill_bonus = getEnemyKillBonus();
         GameEvent e = allocateGameEvent(GameEvent.EVENT_ENEMY_DEFEATED);
         e.var[GameEvent.VAR_ENEMY_STATE_IDX] = this.state_index;
         e.var[GameEvent.VAR_ENEMY_TYPE] = enemy_type;
@@ -215,10 +231,40 @@ public final class GameState {
         e.var[GameEvent.VAR_ENEMY_PIXEL_X] = ge.calcPixelX();
         e.var[GameEvent.VAR_ENEMY_PIXEL_Y] = ge.calcPixelY();
         e.var[GameEvent.VAR_ENEMY_BASE_SCORE] = base_score_add;
-        e.var[GameEvent.VAR_ENEMY_FULL_SCORE] = base_score_add + getEnemyKillBonus();
+        e.var[GameEvent.VAR_ENEMY_FULL_SCORE] = base_score_add + kill_bonus;
 
-        int score_add = base_score_add + getEnemyKillBonus();
+        int score_add = base_score_add + kill_bonus;
         this.score += score_add;
+
+        // 击杀得分成就
+        if (score_add >= 500) {
+            AchievementData.increaseLevel(AchievementData.BIG_ONE, 1);
+            if (score_add >= 1000) {
+                AchievementData.increaseLevel(AchievementData.WHOPPER, 1);
+            }
+        }
+        // 总分里程碑
+        if (this.score >= 250000) {
+            AchievementData.increaseLevel(AchievementData.GOOD_GAME, 1);
+            if (this.score >= 500000) {
+                AchievementData.increaseLevel(AchievementData.GREAT_GAME, 1);
+            }
+            if (this.score >= 1000000) {
+                AchievementData.increaseLevel(AchievementData.AMAZING_GAME, 1);
+            }
+            if (this.score >= 5000000) {
+                AchievementData.increaseLevel(AchievementData.ULTRA_GAME, 1);
+            }
+        }
+        // 击败泰坦
+        if (enemy_type == 9) {
+            AchievementData.increaseLevel(AchievementData.DEFEAT_TITAN, 1);
+        }
+        // 累计积分/击杀数
+        AchievementData.increaseLevel(AchievementData.BIG_SCORE, score_add);
+        AchievementData.increaseLevel(AchievementData.HUGE_SCORE, score_add);
+        AchievementData.increaseLevel(AchievementData.TWENTY_FIVE_K, 1);
+        AchievementData.increaseLevel(AchievementData.SEVENTY_FIVE_K, 1);
     }
 
     /**
@@ -304,8 +350,37 @@ public final class GameState {
      * 下一关
      */
     private void nextLevel() {
+        // 快进计数器
+        if (this.run_state == GAME_FAST_FWD) {
+            this.fast_fwd_counter++;
+            if (this.fast_fwd_counter >= 75) {
+                AchievementData.increaseLevel(AchievementData.FAST_LANE, 1);
+            }
+            if (this.options != null && this.options.optionValue(OptionsData.FAST_FORWARD_LEVEL_PAUSE)) {
+                this.run_state = GAME_RUNNING;
+            }
+        }
         if (this.level_data.getLevelNum() > 1) {
             this.level_bonus++;
+            if (this.level_bonus == 25) {
+                AchievementData.increaseLevel(AchievementData.PERFECT_25, 1);
+            } else if (this.level_bonus == 50) {
+                AchievementData.increaseLevel(AchievementData.PERFECT_50, 1);
+            }
+        }
+        // 生存模式里程碑
+        if (this.survival_mode) {
+            switch (this.level_data.getLevelNum()) {
+                case 10:  AchievementData.increaseLevel(AchievementData.SURVIVAL_10, 1); break;
+                case 20:  AchievementData.increaseLevel(AchievementData.SURVIVAL_20, 1); break;
+                case 30:  AchievementData.increaseLevel(AchievementData.SURVIVAL_30, 1); break;
+                case 40:  AchievementData.increaseLevel(AchievementData.SURVIVAL_40, 1); break;
+                case 50:  AchievementData.increaseLevel(AchievementData.SURVIVAL_50, 1); break;
+                case 60:  AchievementData.increaseLevel(AchievementData.SURVIVAL_60, 1); break;
+                case 70:  AchievementData.increaseLevel(AchievementData.SURVIVAL_70, 1); break;
+                case 80:  AchievementData.increaseLevel(AchievementData.SURVIVAL_80, 1); break;
+                case 90:  AchievementData.increaseLevel(AchievementData.SURVIVAL_90, 1); break;
+            }
         }
 
         if (!this.level_data.nextLevel()) {
@@ -328,7 +403,147 @@ public final class GameState {
                     this.level_data.getLevelNum());
         }
 
+        AchievementData.increaseLevel(AchievementData.EXPERIENCED, 1);
+        AchievementData.increaseLevel(AchievementData.ADDICT, 1);
         this.unit_created_this_level = false;
+    }
+
+    /**
+     * 游戏胜利时触发所有相关成就检测
+     */
+    private void gameWonAchievements() {
+        // 难度成就
+        AchievementData.increaseLevel(AchievementData.COMPLETE_DIFFICULTY_0, 1);
+        if (this.difficulty_level >= 2)  AchievementData.increaseLevel(AchievementData.COMPLETE_DIFFICULTY_2, 1);
+        if (this.difficulty_level >= 5)  AchievementData.increaseLevel(AchievementData.COMPLETE_DIFFICULTY_5, 1);
+        if (this.difficulty_level >= 8)  AchievementData.increaseLevel(AchievementData.COMPLETE_DIFFICULTY_8, 1);
+        if (this.difficulty_level >= 11) AchievementData.increaseLevel(AchievementData.COMPLETE_DIFFICULTY_11, 1);
+        if (this.difficulty_level >= 14) AchievementData.increaseLevel(AchievementData.COMPLETE_DIFFICULTY_14, 1);
+        if (this.difficulty_level >= 17) AchievementData.increaseLevel(AchievementData.COMPLETE_DIFFICULTY_17, 1);
+        if (this.difficulty_level >= 20) AchievementData.increaseLevel(AchievementData.COMPLETE_DIFFICULTY_20, 1);
+        if (this.difficulty_level >= 40) AchievementData.increaseLevel(AchievementData.COMPLETE_DIFFICULTY_40, 1);
+        if (this.difficulty_level >= 60) AchievementData.increaseLevel(AchievementData.COMPLETE_DIFFICULTY_60, 1);
+        if (this.difficulty_level >= 80) AchievementData.increaseLevel(AchievementData.COMPLETE_DIFFICULTY_80, 1);
+        if (this.difficulty_level >= 100) AchievementData.increaseLevel(AchievementData.COMPLETE_DIFFICULTY_100, 1);
+
+        // 生命值特殊成就
+        if (this.health == this.starting_health) AchievementData.increaseLevel(AchievementData.PERFECT_100, 1);
+        if (this.health == 1) AchievementData.increaseLevel(AchievementData.RISK_TAKER, 1);
+        if (this.health >= 18) AchievementData.increaseLevel(AchievementData.SOLID_EFFORT, 1);
+
+        // 不使用特定类型塔
+        if (this.no_slow_towers_created)   AchievementData.increaseLevel(AchievementData.FAST_PACED, 1);
+        if (this.no_gun_towers_created)    AchievementData.increaseLevel(AchievementData.ROCKETMAN, 1);
+        if (this.no_rocket_towers_created) AchievementData.increaseLevel(AchievementData.GUNNER, 1);
+        if (this.cheapskate)               AchievementData.increaseLevel(AchievementData.CHEAPSKATE, 1);
+        if (this.no_sale)                  AchievementData.increaseLevel(AchievementData.NO_SALE, 1);
+        if (this.only_one_tower_created)   AchievementData.increaseLevel(AchievementData.SHOW_OFF, 1);
+
+        // 少量塔成就
+        if (this.tower_powup_counter <= 12) {
+            AchievementData.increaseLevel(AchievementData.POWERED_UP, 1);
+            if (this.health == this.starting_health) {
+                AchievementData.increaseLevel(AchievementData.SUPER_POWERED, 1);
+            }
+        }
+
+        // 30/30 成就
+        if (this.difficulty_level >= 30 && this.health >= 30) {
+            AchievementData.increaseLevel(AchievementData.THIRTY_THIRTY, 1);
+        }
+
+        // 地图相关成就
+        int levelType = this.level_data.getLevelType();
+        switch (levelType) {
+            case LevelData.BASIC_LEVEL:
+                AchievementData.increaseLevel(AchievementData.BASIC_10, 1);
+                AchievementData.increaseLevel(AchievementData.BASIC_25, 1);
+                if (this.difficulty_level >= 40)  AchievementData.increaseLevel(AchievementData.BASIC_LVL_40, 1);
+                if (this.difficulty_level >= 60)  AchievementData.increaseLevel(AchievementData.BASIC_LVL_60, 1);
+                if (this.difficulty_level >= 80)  AchievementData.increaseLevel(AchievementData.BASIC_LVL_80, 1);
+                if (this.difficulty_level >= 100) AchievementData.increaseLevel(AchievementData.BASIC_LVL_100, 1);
+                break;
+            case LevelData.RUINS_LEVEL:
+                AchievementData.increaseLevel(AchievementData.RUINS_10, 1);
+                AchievementData.increaseLevel(AchievementData.RUINS_25, 1);
+                if (this.difficulty_level >= 30)  AchievementData.increaseLevel(AchievementData.RUINS_LVL_30, 1);
+                if (this.difficulty_level >= 50)  AchievementData.increaseLevel(AchievementData.RUINS_LVL_50, 1);
+                if (this.difficulty_level >= 70)  AchievementData.increaseLevel(AchievementData.RUINS_LVL_70, 1);
+                if (this.difficulty_level >= 100) AchievementData.increaseLevel(AchievementData.RUINS_LVL_100, 1);
+                break;
+            case LevelData.FACTORY_LEVEL:
+                AchievementData.increaseLevel(AchievementData.FACTORY_10, 1);
+                AchievementData.increaseLevel(AchievementData.FACTORY_25, 1);
+                if (this.difficulty_level >= 20)  AchievementData.increaseLevel(AchievementData.FACTORY_LVL_20, 1);
+                if (this.difficulty_level >= 40)  AchievementData.increaseLevel(AchievementData.FACTORY_LVL_40, 1);
+                if (this.difficulty_level >= 70)  AchievementData.increaseLevel(AchievementData.FACTORY_LVL_70, 1);
+                if (this.difficulty_level >= 100) AchievementData.increaseLevel(AchievementData.FACTORY_LVL_100, 1);
+                break;
+            case LevelData.COURTYARD_LEVEL:
+                AchievementData.increaseLevel(AchievementData.COURTYARD_10, 1);
+                AchievementData.increaseLevel(AchievementData.COURTYARD_25, 1);
+                if (this.difficulty_level >= 15)  AchievementData.increaseLevel(AchievementData.COURTYARD_LVL_15, 1);
+                if (this.difficulty_level >= 25)  AchievementData.increaseLevel(AchievementData.COURTYARD_LVL_25, 1);
+                if (this.difficulty_level >= 50)  AchievementData.increaseLevel(AchievementData.COURTYARD_LVL_50, 1);
+                if (this.difficulty_level >= 100) AchievementData.increaseLevel(AchievementData.COURTYARD_LVL_100, 1);
+                break;
+            case LevelData.MIXER_LEVEL:
+                if (this.level_data.isFixedPath()) {
+                    AchievementData.increaseLevel(AchievementData.MIXER_E, 1);
+                } else {
+                    switch (this.level_data.getPathCount()) {
+                        case 1:  AchievementData.increaseLevel(AchievementData.MIXER_A, 1); break;
+                        case 2:  AchievementData.increaseLevel(AchievementData.MIXER_B, 1); break;
+                        case 3:  AchievementData.increaseLevel(AchievementData.MIXER_C, 1); break;
+                        default: AchievementData.increaseLevel(AchievementData.MIXER_D, 1); break;
+                    }
+                }
+                break;
+            case LevelData.ROADWAY_LEVEL:
+                if (this.difficulty_level >= 10)  AchievementData.increaseLevel(AchievementData.ROADWAY_LVL_10, 1);
+                if (this.difficulty_level >= 50)  AchievementData.increaseLevel(AchievementData.ROADWAY_LVL_50, 1);
+                if (this.difficulty_level >= 100) AchievementData.increaseLevel(AchievementData.ROADWAY_LVL_100, 1);
+                break;
+        }
+
+        // 大富豪成就（所有塔升级到最大）
+        bigSpenderAchievement();
+
+        // 喷火兵成就（25+个火焰塔）
+        pyroAchievement();
+
+        // 生存模式通关
+        if (this.survival_mode) {
+            AchievementData.increaseLevel(AchievementData.SURVIVAL_100, 1);
+        }
+    }
+
+    /**
+     * 大富豪成就：所有塔都升级到最大等级
+     */
+    private void bigSpenderAchievement() {
+        boolean bigSpender = true;
+        for (GameTower t = this.tower_list; bigSpender && t != null; t = t.next) {
+            bigSpender = TowerData.upgradeType(t.getType(), 0) < 0;
+        }
+        if (bigSpender) {
+            AchievementData.increaseLevel(AchievementData.BIG_SPENDER, 1);
+        }
+    }
+
+    /**
+     * 喷火兵成就：使用 25+ 个火焰塔
+     */
+    private void pyroAchievement() {
+        int flameCount = 0;
+        for (GameTower t = this.tower_list; t != null; t = t.next) {
+            if (t.getType() == 10 || t.getType() == 11) {
+                flameCount++;
+            }
+        }
+        if (flameCount >= 25) {
+            AchievementData.increaseLevel(AchievementData.PYRO, 1);
+        }
     }
 
     /**
@@ -434,6 +649,10 @@ public final class GameState {
         GameEvent e = allocateGameEvent(GameEvent.EVENT_MONEY_CHANGED);
         e.var[GameEvent.VAR_MONEY_OLD_AMOUNT] = this.money;
         this.money = new_money;
+        // 金钱里程碑成就
+        if (this.money >= 1000) AchievementData.increaseLevel(AchievementData.RAINY_DAY, 1);
+        if (this.money >= 2500) AchievementData.increaseLevel(AchievementData.BIG_SAVER, 1);
+        if (this.money >= 5000) AchievementData.increaseLevel(AchievementData.CRAZY_SAVER, 1);
     }
 
     /**
@@ -453,6 +672,8 @@ public final class GameState {
             if (new_run_state == GAME_LOST || new_run_state == GAME_WON ||
                     new_run_state == GAME_NOT_STARTED) {
                 if (new_run_state == GAME_WON) {
+                    // 成就检测（必须在 initGame 之前，因为 initGame 会重置标志）
+                    gameWonAchievements();
                     // 使用新版积分计算器
                     long rewardPoints = GameRewardCalculator.calculateSimple(
                         this.difficulty_level,
@@ -535,10 +756,8 @@ public final class GameState {
         }
         
         // 放置成功
-        System.out.println("[TowerDebug] tryPlaceTower request type=" + object_type + " at (" + gridx + "," + gridy + ")");
         GameTower tower = allocateGameTower();
         tower.init(this.collision_grid, gridx, gridy, object_type, this.state_index);
-        System.out.println("[TowerDebug] after init tower stored=(" + tower.getGridX() + "," + tower.getGridY() + ")");
         towersChanged();
         setMoney(this.money - TowerData.cost(object_type));
         this.tower_powup_counter++;
@@ -569,6 +788,8 @@ public final class GameState {
             sellTower(tower);
             return;
         }
+        // 升级塔 → 不是"吝啬鬼"
+        this.cheapskate = false;
         if (TowerData.cost(new_tower_id) <= this.money) {
             setMoney(this.money - TowerData.cost(new_tower_id));
             int old_id = tower.getType();
@@ -585,6 +806,8 @@ public final class GameState {
      * 出售塔
      */
     public void sellTower(GameTower tower) {
+        // 出售塔 → 不是"非卖品"
+        this.no_sale = false;
         setMoney(this.money + TowerData.sellValue(tower.getType()));
         
         // 先从排序链表中移除（必须在修改 tower_list 之前）
@@ -755,6 +978,7 @@ public final class GameState {
     public int getMoney() { return money; }
     public int getHealth() { return health; }
     public int getRunState() { return run_state; }
+    public int getStartingHealth() { return starting_health; }
     public int getDifficultyLevel() { return difficulty_level; }
     public int getEnemyKillBonus() { return this.level_bonus; }
     public int activeEventCount() { return active_events; }
