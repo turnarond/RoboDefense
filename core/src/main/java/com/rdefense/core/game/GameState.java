@@ -69,6 +69,7 @@ public final class GameState {
     private boolean cheapskate = true;     // 是否从未升级塔
     private boolean no_sale = true;        // 是否从未出售塔
     private int fast_fwd_counter = 0;      // 快进通关关卡计数
+    private boolean auto_save_requested;    // 每 10 关自动存档请求（由 GamePlayScreen 消费）
 
     /**
      * 创建游戏状态
@@ -109,8 +110,15 @@ public final class GameState {
         this.tower_powup_counter = 0;
         this.towers_allocated = 0;
         this.event_pool = null;
+        // 原版：event_list 残留事件保留并重新计数（配合 500 上限）
         this.events_allocated = 0;
         this.active_events = 0;
+        for (int event_type = 0; event_type < GameEvent.NUM_EVENT_TYPES; event_type++) {
+            for (GameEvent ev = this.event_list[event_type]; ev != null; ev = ev.next) {
+                this.events_allocated++;
+                this.active_events++;
+            }
+        }
         this.difficulty_level = difficulty;
 
         this.grid_order.clear();
@@ -126,6 +134,10 @@ public final class GameState {
         setMoney(startingCash);
         this.starting_health = RewardData.applyReward(20, RewardData.HEALTH_UPGRADE);
         setHealth(this.starting_health);
+        if (this.survival_mode) {
+            this.difficulty_level = LevelDataGenerator.getSurvivalDifficultyLevel(
+                    this.level_data.getLevelNum());
+        }
     }
 
     public void initGame(int map_id) {
@@ -394,8 +406,7 @@ public final class GameState {
                 this.run_state = GAME_RUNNING;
             }
             if (this.level_data.getLevelNum() % 10 == 0) {
-                // 每10关自动保存
-                // QuickSave.saveState(this, false);
+                this.auto_save_requested = true; // GamePlayScreen 轮询后执行 quickSave
             }
         }
 
@@ -555,6 +566,11 @@ public final class GameState {
         if (e == null) {
             e = new GameEvent();
             this.events_allocated++;
+            if (this.events_allocated > 500) {
+                // 原版防 OOM：超限时清空粒子与爆炸事件队列
+                clearEventQueue(GameEvent.EVENT_PARTICLE);
+                clearEventQueue(GameEvent.EVENT_EXPLOSION);
+            }
         } else {
             this.event_pool = this.event_pool.next;
         }
@@ -591,6 +607,15 @@ public final class GameState {
         }
     }
 
+    /** 清空指定类型的事件队列（原版 clearEventQueue） */
+    private void clearEventQueue(int event_type) {
+        while (this.event_list[event_type] != null) {
+            this.events_allocated--;
+            this.active_events--;
+            this.event_list[event_type] = this.event_list[event_type].next;
+        }
+    }
+
     /**
      * 分配敌人
      */
@@ -599,6 +624,10 @@ public final class GameState {
         if (ge == null) {
             ge = new Enemy();
             this.enemies_allocated++;
+            if (this.enemies_allocated > 100) {
+                showError("内部错误: 敌人分配数 " + this.enemies_allocated + " > 100");
+                endGame(GAME_NOT_STARTED);
+            }
         } else {
             this.enemy_pool = this.enemy_pool.next;
         }
@@ -818,10 +847,12 @@ public final class GameState {
     public void upgradeTower(GameTower tower, int new_tower_id) {
         if (new_tower_id == 0) {
             sellTower(tower);
+            // 原版：出售时 ≤12 才递减强化计数（POWERED_UP 成就条件）
+            if (this.tower_powup_counter <= 12) {
+                this.tower_powup_counter--;
+            }
             return;
         }
-        // 升级塔 → 不是"吝啬鬼"
-        this.cheapskate = false;
         if (TowerData.cost(new_tower_id) <= this.money) {
             setMoney(this.money - TowerData.cost(new_tower_id));
             int old_id = tower.getType();
@@ -831,6 +862,8 @@ public final class GameState {
             } else {
                 allocateGameEvent(GameEvent.EVENT_TOWERS_CHANGED);
             }
+            // 原版：仅升级成功后才失去"吝啬鬼"资格
+            this.cheapskate = false;
         }
     }
 
@@ -1029,6 +1062,13 @@ public final class GameState {
 
     public boolean isSurvivalMode() { return survival_mode; }
     public void setSurvivalMode(boolean enabled) { this.survival_mode = enabled; }
+
+    /** 取走自动存档请求（一次性），由 GamePlayScreen 每帧轮询 */
+    public boolean consumeAutoSaveRequest() {
+        boolean pending = this.auto_save_requested;
+        this.auto_save_requested = false;
+        return pending;
+    }
 
     // ========== 存档接口（对应原版 GameState.saveState/loadState）==========
     //
@@ -1244,12 +1284,17 @@ public final class GameState {
         state_index = savedStateIndex;
         score = savedScore;
         level_bonus = savedLevelBonus;
-        run_state = savedRunState;
+        // 原版：读档后不恢复 run_state（让 savedRunState 入流读取位置但不使用），
+        // 而是强制暂停并通知 UI（玩家确认后再继续）
+        // run_state = savedRunState;
         money = savedMoney;
         health = savedHealth;
         starting_health = savedStartingHealth;
         difficulty_level = savedDifficulty;
         survival_mode = savedSurvival;
+        // 原版：读档后强制暂停并通知 UI
+        this.run_state = GAME_PAUSED;
+        allocateGameEvent(GameEvent.EVENT_GAME_LOAD_SUCCESS);
         return true;
     }
 
