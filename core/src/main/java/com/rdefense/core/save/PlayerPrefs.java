@@ -33,6 +33,10 @@ public class PlayerPrefs {
     public static final String TOWER_MIXER_VALUE_STR = "AndroidDefenseTowerMixerValue";
     /** 混合器选关值 */
     public static final String MIXER_VALUE_STR = "AndroidDefenseMixerValue";
+    /** 混合器值键 */
+    private static final String KEY_MIXER_VALUE = "mixer_value";
+    /** 塔混合器值键 */
+    private static final String KEY_TOWER_MIXER_VALUE = "tower_mixer_value";
     /** 调试存档标志 */
     public static final String DEBUG_SAVE_FLAG_PREF_STR = "ADDebugSaveFlag";
     /** 调试存档槽 */
@@ -152,19 +156,19 @@ public class PlayerPrefs {
     }
 
     public int getMixerValue() {
-        return getInt("mixer_value", 0);
+        return getInt(KEY_MIXER_VALUE, 0);
     }
 
     public void putMixerValue(int value) {
-        putInt("mixer_value", value);
+        putInt(KEY_MIXER_VALUE, value);
     }
 
     public int getTowerMixerValue() {
-        return getInt("tower_mixer_value", 0);
+        return getInt(KEY_TOWER_MIXER_VALUE, 0);
     }
 
     public void putTowerMixerValue(int value) {
-        putInt("tower_mixer_value", value);
+        putInt(KEY_TOWER_MIXER_VALUE, value);
     }
 
     /** 是否存在快速存档 */

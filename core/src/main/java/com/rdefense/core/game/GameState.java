@@ -38,7 +38,6 @@ public final class GameState {
     private Enemy enemy_graveyard;
     private Enemy enemy_pool;
     private GameTower tower_list;
-    private GameTower tower_pool;
     private Bullet bullet_list;
     private Bullet bullet_pool;
     private GameEvent[] event_list = new GameEvent[GameEvent.NUM_EVENT_TYPES];
@@ -913,16 +912,11 @@ public final class GameState {
     }
 
     /**
-     * 分配塔（使用对象池）
+     * 分配塔
      */
     private GameTower allocateGameTower() {
-        GameTower t = this.tower_pool;
-        if (t == null) {
-            t = new GameTower();
-            this.towers_allocated++;
-        } else {
-            this.tower_pool = this.tower_pool.next;
-        }
+        GameTower t = new GameTower();
+        this.towers_allocated++;
         t.next = this.tower_list;
         this.tower_list = t;
         this.grid_order.insertObject(t);
@@ -1296,7 +1290,6 @@ public final class GameState {
 
         // 4. 重建塔链表
         tower_list = null;
-        tower_pool = null;
         grid_order.clear();
         for (int i = 0; i < towerCount; i++) {
             GameTower t = new GameTower();
