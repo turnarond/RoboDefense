@@ -117,7 +117,7 @@ public final class PerformanceMonitor {
         // 更新质量档位索引
         if (skipLevel != oldSkipLevel) {
             skipIndex = 0;
-            while (skipIndex < SKIP_LEVELS.length - 1 && skipLevel >= SKIP_LEVELS[skipIndex]) {
+            while (skipIndex < SKIP_LEVELS.length - 1 && skipLevel > SKIP_LEVELS[skipIndex]) {
                 skipIndex++;
             }
         }
