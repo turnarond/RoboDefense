@@ -1164,6 +1164,16 @@ public final class GameState {
             for (Enemy e = enemy_list; e != null; e = e.next) {
                 e.saveState(out);
             }
+
+            // 成就追踪字段（原版写入；读档后需恢复）
+            out.writeBoolean(no_slow_towers_created);
+            out.writeBoolean(no_gun_towers_created);
+            out.writeBoolean(no_rocket_towers_created);
+            out.writeBoolean(cheapskate);
+            out.writeBoolean(no_sale);
+            out.writeBoolean(only_one_tower_created);
+            out.writeInt(tower_powup_counter);
+            out.writeInt(fast_fwd_counter);
         } catch (IOException ex) {
             throw ex;
         } catch (Exception ex) {
@@ -1242,6 +1252,16 @@ public final class GameState {
                 in.readInt();                    // death_frame（无需恢复）
             }
         }
+
+        // 读取成就追踪字段（对应 saveState 末尾写入顺序）
+        boolean saved_no_slow   = in.readBoolean();
+        boolean saved_no_gun    = in.readBoolean();
+        boolean saved_no_rocket = in.readBoolean();
+        boolean saved_cheapskate = in.readBoolean();
+        boolean saved_no_sale   = in.readBoolean();
+        boolean saved_only_one  = in.readBoolean();
+        int saved_powup         = in.readInt();
+        int saved_fastfwd       = in.readInt();
 
         // 3. 重新初始化游戏基础设施
         // 注意：不能调用 initGame 会重置 level_data，所以我们先保存 level_data 的关键信息
@@ -1322,6 +1342,14 @@ public final class GameState {
         starting_health = savedStartingHealth;
         difficulty_level = savedDifficulty;
         survival_mode = savedSurvival;
+        no_slow_towers_created = saved_no_slow;
+        no_gun_towers_created = saved_no_gun;
+        no_rocket_towers_created = saved_no_rocket;
+        cheapskate = saved_cheapskate;
+        no_sale = saved_no_sale;
+        only_one_tower_created = saved_only_one;
+        tower_powup_counter = saved_powup;
+        fast_fwd_counter = saved_fastfwd;
         // 原版：读档后强制暂停并通知 UI
         this.run_state = GAME_PAUSED;
         allocateGameEvent(GameEvent.EVENT_GAME_LOAD_SUCCESS);
