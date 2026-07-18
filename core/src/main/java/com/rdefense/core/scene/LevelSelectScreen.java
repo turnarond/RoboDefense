@@ -24,6 +24,11 @@ public class LevelSelectScreen extends GameScreen {
     private int mixerValue;
     private int towerMixerValue;
     private PlayerPrefs prefs;
+    private boolean mixerPanelOpen = false;
+    private static final int DIGIT_COUNT = 5;
+    private int[] mixerDigits = new int[DIGIT_COUNT];
+    private int[] towerMixerDigits = new int[DIGIT_COUNT];
+    private boolean editingTowerMixer = false;
 
     // === 布局坐标（computeLayout 统一计算）===
     private int sw, sh;
@@ -59,7 +64,11 @@ public class LevelSelectScreen extends GameScreen {
             this.survivalMode = prefs.isSurvivalMode();
             this.towerMixerEnabled = prefs.isTowerMixerEnabled();
             this.mixerValue = prefs.getMixerValue();
+            if (this.mixerValue <= 0) this.mixerValue = Math.abs(com.rdefense.core.game.FastRandom.nextInt() % 100000);
             this.towerMixerValue = prefs.getTowerMixerValue();
+            if (this.towerMixerValue <= 0) this.towerMixerValue = Math.abs(com.rdefense.core.game.FastRandom.nextInt() % 100000);
+            loadDigits(this.mixerValue, this.mixerDigits);
+            loadDigits(this.towerMixerValue, this.towerMixerDigits);
         }
     }
 
@@ -166,7 +175,8 @@ public class LevelSelectScreen extends GameScreen {
         // 模式开关
         boolean u = isMapUnlocked(currentMap);
         if (hit(x, y, survChkX, modeRowY, chkSize, chkSize)) { if (u) survivalMode = !survivalMode; return; }
-        if (hit(x, y, mixChkX, modeRowY, chkSize, chkSize)) { if (u && isMixerUnlocked()) towerMixerEnabled = !towerMixerEnabled; return; }
+        if (hit(x, y, mixChkX, modeRowY, chkSize, chkSize)) { if (u && isMixerUnlocked()) { towerMixerEnabled = !towerMixerEnabled; if (towerMixerEnabled) mixerPanelOpen = true; } return; }
+        if (mixerPanelOpen && handleMixerPanelClick(x, y)) return;
     }
 
     private boolean hit(int px, int py, int rx, int ry, int rw, int rh) {
@@ -272,6 +282,8 @@ public class LevelSelectScreen extends GameScreen {
             r.drawText("", mixChkX, modeRowY, 0, 0, 0, 0); // placeholder
         }
 
+        if (mixerPanelOpen) drawMixerPanel(r);
+
         // 存档警告
         if (game.getGameSaveManager() != null && game.getGameSaveManager().hasQuickSave()) {
             r.drawText("开始新游戏将清除快速存档", cardX + cardW/2 - 90, diffRowY - 22, 0.85f, 0.55f, 0.25f, 0.9f);
@@ -303,5 +315,77 @@ public class LevelSelectScreen extends GameScreen {
         }
         float lr = enabled ? 0.75f : 0.4f, lg = enabled ? 0.82f : 0.4f, lb = enabled ? 0.9f : 0.4f;
         r.drawText(label, x + chkSize + 8, y + 14, lr, lg, lb, 1.0f);
+    }
+
+    // ==================== 混合器数码选择面板 ====================
+
+    private static void loadDigits(int value, int[] digits) {
+        for (int i = DIGIT_COUNT - 1; i >= 0; i--) {
+            digits[i] = value % 10;
+            value /= 10;
+        }
+    }
+
+    private static int digitsToValue(int[] digits) {
+        int v = 0;
+        for (int i = 0; i < DIGIT_COUNT; i++) v = v * 10 + digits[i];
+        return v;
+    }
+
+    private void randomizeDigits(int[] digits) {
+        loadDigits(Math.abs(com.rdefense.core.game.FastRandom.nextInt() % 100000), digits);
+    }
+
+    private void drawMixerPanel(com.rdefense.core.platform.GameRenderer r) {
+        int px = mixChkX + 40;
+        int py = modeRowY - 15;
+        int panelW = 280;
+        int panelH = 80;
+        r.drawRect(px, py, panelW, panelH, 0.05f, 0.08f, 0.12f, 0.92f);
+        r.drawText(editingTowerMixer ? "塔混合器种子" : "关卡混合器种子",
+                px + 8, py + 4, 0.75f, 0.85f, 0.95f, 1f);
+
+        int[] digits = editingTowerMixer ? towerMixerDigits : mixerDigits;
+        for (int i = 0; i < DIGIT_COUNT; i++) {
+            int dx = px + 16 + i * 48;
+            int dy = py + 22;
+            r.drawRect(dx + 8, dy - 14, 18, 12, 0.2f, 0.7f, 0.9f, 1f);
+            r.drawText("▲", dx + 10, dy - 13, 0.9f, 0.9f, 0.9f, 1f);
+            r.drawText(Integer.toString(digits[i]), dx + 12, dy + 6, 1f, 1f, 0.3f, 1f);
+            r.drawRect(dx + 8, dy + 16, 18, 12, 0.2f, 0.7f, 0.9f, 1f);
+            r.drawText("▼", dx + 10, dy + 16, 0.9f, 0.9f, 0.9f, 1f);
+        }
+        int rx = px + panelW - 44;
+        r.drawRect(rx, py + 46, 36, 24, 0.15f, 0.5f, 0.15f, 1f);
+        r.drawText("随机", rx + 3, py + 54, 0.7f, 1f, 0.7f, 1f);
+        r.drawRect(px + 6, py + 46, 60, 24, 0.3f, 0.3f, 0.5f, 1f);
+        r.drawText(editingTowerMixer ? "普通" : "塔", px + 12, py + 54, 0.9f, 0.85f, 0.7f, 1f);
+    }
+
+    private boolean handleMixerPanelClick(int x, int y) {
+        int px = mixChkX + 40;
+        int py = modeRowY - 15;
+        int[] digits = editingTowerMixer ? towerMixerDigits : mixerDigits;
+        int rx = px + 280 - 44;
+        // 随机按钮
+        if (x >= rx && x <= rx + 36 && y >= py + 46 && y <= py + 70) {
+            randomizeDigits(digits); return true;
+        }
+        // 切换按钮
+        if (x >= px + 6 && x <= px + 66 && y >= py + 46 && y <= py + 70) {
+            editingTowerMixer = !editingTowerMixer; return true;
+        }
+        for (int i = 0; i < DIGIT_COUNT; i++) {
+            int dx = px + 24 + i * 48;
+            if (x >= dx && x <= dx + 18) {
+                if (y >= py + 8 && y <= py + 20) { digits[i] = (digits[i] + 1) % 10; return true; }
+                if (y >= py + 38 && y <= py + 50) { digits[i] = (digits[i] + 9) % 10; return true; }
+            }
+        }
+        // 点击面板外 → 关闭并保存
+        mixerPanelOpen = false;
+        prefs.putMixerValue(digitsToValue(mixerDigits));
+        prefs.putTowerMixerValue(digitsToValue(towerMixerDigits));
+        return true;
     }
 }
