@@ -35,6 +35,9 @@ public class GameInputHandlerImpl implements GameInputHandler {
 
     @Override
     public void onPointerDown(float x, float y, int pointer) {
+        // 缩放滑块点击检测（最优先，以免被其他操作拦截）
+        if (uiRenderer.handleScaleSliderClick((int) x, (int) y, camera)) return;
+
         this.touchDownX = x;
         this.touchDownY = y;
         this.isDragging = false;

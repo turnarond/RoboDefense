@@ -752,6 +752,9 @@ public class GamePlayScreen extends GameScreen {
         uiRenderer.renderTowerButtons(gameState.getMoney(), stateIndex);
         uiRenderer.renderControlButtons(gameState.getRunState());
 
+        // 绘制缩放滑块条（受选项 6 控制）
+        uiRenderer.renderScaleSlider(options, camera);
+
         // 在按钮上绘制塔精灵预览
         drawTowerButtonSprites(renderer);
     }

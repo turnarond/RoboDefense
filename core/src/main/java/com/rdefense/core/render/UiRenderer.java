@@ -33,6 +33,8 @@ public class UiRenderer {
     private int shortMessageTimer = 0;
     private static final int SHORT_MESSAGE_DURATION = 150;
 
+    private int[] scaleSliderRect;
+
     public UiRenderer(GameRenderer renderer, CameraManager camera) {
         this.renderer = renderer;
         this.camera = camera;
@@ -280,6 +282,40 @@ public class UiRenderer {
         renderer.drawText("按空格继续", centerX, centerY - 40, 0.7f, 0.7f, 0.7f, 0.9f);
 
         renderer.end();
+    }
+
+    /** 绘制缩放滑块条（顶部，受选项 6 控制，对应原版 DisplayScaleUI） */
+    public void renderScaleSlider(com.rdefense.core.config.OptionsData options,
+                                  com.rdefense.core.render.CameraManager camera) {
+        if (options == null || !options.optionValue(6)) return;
+        int screenW = renderer.getScreenWidth();
+        int barX = screenW / 2 - 75;
+        int barY = 6;
+        int barW = 150;
+        int barH = 14;
+        renderer.begin();
+        renderer.drawRect(barX, barY, barW, barH, 0.15f, 0.15f, 0.2f, 0.8f);
+        float scale = camera.getScale();
+        float pct = (scale - 0.5f) / (2.0f - 0.5f);
+        if (pct < 0f) pct = 0f; if (pct > 1f) pct = 1f;
+        int knobX = barX + (int)(pct * (barW - 10));
+        renderer.drawRect(knobX, barY + 1, 10, barH - 2, 0.3f, 0.7f, 0.95f, 1f);
+        renderer.end();
+        this.scaleSliderRect = new int[]{barX, barY, barW, barH};
+    }
+
+    /** 检查点击是否在滑块上，若是则更新缩放 */
+    public boolean handleScaleSliderClick(int clickX, int clickY,
+                                          com.rdefense.core.render.CameraManager camera) {
+        if (scaleSliderRect == null) return false;
+        int barX = scaleSliderRect[0], barY = scaleSliderRect[1],
+            barW = scaleSliderRect[2], barH = scaleSliderRect[3];
+        if (clickX < barX || clickX > barX + barW || clickY < barY - 6 || clickY > barY + barH + 6)
+            return false;
+        float pct = (float)(clickX - barX) / barW;
+        float newScale = 0.5f + pct * 1.5f;
+        camera.setScale(Math.max(0.5f, Math.min(2.0f, newScale)));
+        return true;
     }
 
     public void renderGameOverOverlay(String title, String subtitle) {
