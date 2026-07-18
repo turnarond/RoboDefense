@@ -397,6 +397,8 @@ public class Enemy extends GridObject {
         out.writeInt(this.slow_counter);
         out.writeInt(this.fire_counter);
         out.writeInt(this.death_frame);
+        out.writeBoolean(this.at_exit);
+        out.writeBoolean(this.exiting_grid);
     }
 
     @Override
@@ -412,8 +414,8 @@ public class Enemy extends GridObject {
             this.slow_counter = in.readInt();
             this.fire_counter = in.readInt();
             this.death_frame = in.readInt();
-            this.at_exit = false;
-            this.exiting_grid = false;
+            this.at_exit = in.readBoolean();
+            this.exiting_grid = in.readBoolean();
             flameInit();
         }
         return ok;

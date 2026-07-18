@@ -1234,7 +1234,7 @@ public final class GameState {
         int enemyCount = in.readInt();
 
         // 3. 缓存敌人数据
-        int[][] enemyData = new int[enemyCount][12];
+        int[][] enemyData = new int[enemyCount][14];
         if (enemyCount > 0) {
             for (int i = 0; i < enemyCount; i++) {
                 enemyData[i][0] = in.readInt(); // gridx
@@ -1250,6 +1250,8 @@ public final class GameState {
                 enemyData[i][10] = in.readInt(); // slow_counter
                 enemyData[i][11] = in.readInt(); // fire_counter
                 in.readInt();                    // death_frame（无需恢复）
+                enemyData[i][12] = in.readBoolean() ? 1 : 0; // at_exit
+                enemyData[i][13] = in.readBoolean() ? 1 : 0; // exiting_grid
             }
         }
 
@@ -1317,8 +1319,8 @@ public final class GameState {
             e.fire_counter = enemyData[i][11];
             e.x_offset = enemyData[i][8];
             e.y_offset = enemyData[i][9];
-            e.at_exit = false;
-            e.exiting_grid = false;
+            e.at_exit = enemyData[i][12] != 0;
+            e.exiting_grid = enemyData[i][13] != 0;
             e.next = enemy_list;
             enemy_list = e;
             grid_order.insertObject(e);
