@@ -122,11 +122,13 @@ public final class GameState {
         this.difficulty_level = difficulty;
 
         this.grid_order.clear();
+        allocateGameEvent(GameEvent.EVENT_TOWERS_CHANGED);
         this.level_data.init(map_id, difficulty);
         this.collision_grid = new CollisionGrid(
                 this.level_data.getGridWidth(),
                 this.level_data.getGridHeight()
         );
+        allocateGameEvent(GameEvent.EVENT_GAME_INIT);
 
         initMovementGrid();
 
