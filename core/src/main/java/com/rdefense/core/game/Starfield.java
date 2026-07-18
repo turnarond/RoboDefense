@@ -11,13 +11,14 @@ public final class Starfield {
     private final short[] starX = new short[NUM_STARS];
     private final short[] starY = new short[NUM_STARS];
     private final byte[] starAlpha = new byte[NUM_STARS];
+    private final java.util.Random rng;
 
     public Starfield(int seed) {
-        FastRandom.init();
+        this.rng = new java.util.Random(seed);
         for (int i = 0; i < NUM_STARS; i++) {
-            starX[i] = (short) (FastRandom.nextInt(FIELD_WIDTH));
-            starY[i] = (short) (FastRandom.nextInt(FIELD_HEIGHT));
-            starAlpha[i] = (byte) (60 + FastRandom.nextInt(196));
+            starX[i] = (short) (rng.nextInt(FIELD_WIDTH));
+            starY[i] = (short) (rng.nextInt(FIELD_HEIGHT));
+            starAlpha[i] = (byte) (60 + rng.nextInt(196));
         }
     }
 
@@ -27,8 +28,8 @@ public final class Starfield {
             int y = (starY[i] & 0xFFFF) + SCROLL_SPEED;
             if (y >= FIELD_HEIGHT) {
                 y -= FIELD_HEIGHT;
-                starX[i] = (short) (FastRandom.nextInt(FIELD_WIDTH));
-                starAlpha[i] = (byte) (60 + FastRandom.nextInt(196));
+                starX[i] = (short) (rng.nextInt(FIELD_WIDTH));
+                starAlpha[i] = (byte) (60 + rng.nextInt(196));
             }
             starY[i] = (short) y;
         }

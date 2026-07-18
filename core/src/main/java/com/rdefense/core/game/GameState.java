@@ -150,8 +150,6 @@ public final class GameState {
      */
     public void nextState() {
         recycleGameEvents();
-        // 原版 dequeueAchievements：将待显示成就转为事件
-        dequeueAchievements();
 
         if (this.run_state == GAME_RUNNING || this.run_state == GAME_FAST_FWD) {
             this.state_index++;

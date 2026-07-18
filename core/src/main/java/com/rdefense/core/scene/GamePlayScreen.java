@@ -262,13 +262,6 @@ public class GamePlayScreen extends GameScreen {
         int runState = gameState.getRunState();
         int levelType = gameState.getLevelData().getLevelType();
 
-        // 0. 星空粒子背景（宇宙/公路关卡）
-        com.rdefense.core.game.Starfield sf = gameState.getLevelData().getStarfield();
-        if (sf != null) {
-            sf.update();
-            sf.draw(renderer, 0, 0);
-        }
-
         // 1. 绘制地图背景
         drawBackground(renderer, levelType);
 
