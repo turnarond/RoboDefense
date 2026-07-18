@@ -152,6 +152,19 @@ public class LevelSelectScreen extends GameScreen {
         int x = Gdx.input.getX();
         int y = sh - Gdx.input.getY(); // flip to match draw coords
 
+        // 声音开关切换
+        if (hit(x, y, 20, 56, 60, 28)) {
+            boolean cur = prefs.getBool("enable_sound", true);
+            prefs.putBool("enable_sound", !cur);
+            return;
+        }
+        // 设置入口跳转
+        int optX = sw - 100;
+        if (hit(x, y, optX, 56, 80, 28)) {
+            switchScreen(new OptionsScreen(game));
+            return;
+        }
+
         // 底部按钮
         if (hit(x, y, backX, backY, backW, backH)) { switchScreen(new MainMenuScreen(game)); return; }
         if (hit(x, y, startX, startY, startW, startH)) { onStart(); return; }
@@ -283,6 +296,13 @@ public class LevelSelectScreen extends GameScreen {
         }
 
         if (mixerPanelOpen) drawMixerPanel(r);
+
+        // ========== 声音开关 & 设置入口 ==========
+        boolean soundOn = prefs.getBool("enable_sound", true);
+        r.drawText("声音 " + (soundOn ? "开" : "关"), 20, 62, 0.7f, 0.82f, 0.95f, 1f);
+        int optX = sw - 100;
+        r.drawRect(optX, 56, 80, 28, 0.1f, 0.15f, 0.25f, 0.85f);
+        r.drawText("设置", optX + 8, 62, 0.75f, 0.85f, 0.95f, 1f);
 
         // 存档警告
         if (game.getGameSaveManager() != null && game.getGameSaveManager().hasQuickSave()) {
