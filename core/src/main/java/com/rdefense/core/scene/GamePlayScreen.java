@@ -750,6 +750,7 @@ public class GamePlayScreen extends GameScreen {
         }
 
         uiRenderer.renderTowerButtons(gameState.getMoney(), stateIndex);
+        uiRenderer.renderControlButtons(gameState.getRunState());
 
         // 在按钮上绘制塔精灵预览
         drawTowerButtonSprites(renderer);
