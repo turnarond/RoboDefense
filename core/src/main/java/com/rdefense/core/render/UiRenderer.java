@@ -296,6 +296,41 @@ public class UiRenderer {
         renderer.end();
     }
 
+    /**
+     * 关卡结算明细（消费 EVENT_SCORE_SAVED，对应原版 ScoreOverlay 的简化实现：
+     * 五行明细逐行显示 + 合计，帧驱动淡入）
+     */
+    public void renderScoreOverlay(com.rdefense.core.game.GameState gameState) {
+        com.rdefense.core.game.GameEvent e =
+                gameState.getGameEventList(com.rdefense.core.game.GameEvent.EVENT_SCORE_SAVED);
+        if (e == null) return;
+
+        int frame = e.var[com.rdefense.core.game.GameEvent.VAR_SCORE_FRAME_INDEX]++;
+        int scoreAdd = e.var[com.rdefense.core.game.GameEvent.VAR_SCORE_ADD];
+        int wonBonus = e.var[com.rdefense.core.game.GameEvent.VAR_SCORE_WON_BONUS];
+        int healthBonus = e.var[com.rdefense.core.game.GameEvent.VAR_SCORE_HEALTH_BONUS];
+        int perfectBonus = e.var[com.rdefense.core.game.GameEvent.VAR_SCORE_PERFECT_BONUS];
+        int moneyBonus = e.var[com.rdefense.core.game.GameEvent.VAR_SCORE_MONEY_BONUS];
+        long total = (long) scoreAdd + wonBonus + healthBonus + perfectBonus + moneyBonus;
+
+        int cx = renderer.getScreenWidth() / 2 - 110;
+        int cy = renderer.getScreenHeight() / 2 - 90;
+        renderer.begin();
+        renderer.drawRect(cx - 20, cy - 30, 280, 190, 0f, 0f, 0f, 0.75f);
+        String[] labels = {"得分", "胜利奖励", "生命奖励", "完美奖励", "金钱奖励"};
+        int[] values = {scoreAdd, wonBonus, healthBonus, perfectBonus, moneyBonus};
+        int shown = Math.min(labels.length, frame / 12 + 1);
+        for (int i = 0; i < shown; i++) {
+            renderer.drawText(labels[i], cx, cy + i * 24, 0.75f, 0.85f, 0.95f, 1.0f);
+            renderer.drawText("+" + values[i], cx + 150, cy + i * 24, 1.0f, 0.9f, 0.2f, 1.0f);
+        }
+        if (shown >= labels.length) {
+            renderer.drawText("合计积分", cx, cy + 132, 1.0f, 1.0f, 1.0f, 1.0f);
+            renderer.drawText("+" + total, cx + 150, cy + 132, 0.2f, 1.0f, 0.6f, 1.0f);
+        }
+        renderer.end();
+    }
+
     public void showUpgradeDialog(float worldX, float worldY, int towerType, UpgradeOption[] options, int sellValue) {
         upgradeDialog.visible = true;
         upgradeDialog.worldX = worldX;

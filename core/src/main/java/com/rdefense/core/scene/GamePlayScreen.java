@@ -42,6 +42,7 @@ public class GamePlayScreen extends GameScreen {
     private int pendingDifficulty = 0;
     private boolean resumeMode = false;     // 从快速存档恢复
     private int loadSlotId = -1;            // 从指定槽位加载（>=0 有效）
+    private int lastRunState = -1; // 上一帧 run_state，用于检测胜负转换
 
     public GamePlayScreen(RoboDefenseGame game) {
         super(game);
@@ -201,6 +202,12 @@ public class GamePlayScreen extends GameScreen {
             // 游戏结束：点击重置
             if (runState == GameState.GAME_LOST || runState == GameState.GAME_WON) {
                 if (Gdx.input.justTouched()) {
+                    // 关闭结算明细事件（否则残留到下一局）
+                    for (com.rdefense.core.game.GameEvent e =
+                            gameState.getGameEventList(com.rdefense.core.game.GameEvent.EVENT_SCORE_SAVED);
+                            e != null; e = e.next) {
+                        e.finished = true;
+                    }
                     gameState.initGame(gameState.getLevelData().getLevelType());
                     gameLoop.init();
                 }
@@ -210,6 +217,22 @@ public class GamePlayScreen extends GameScreen {
             // 同步快进模式到 GameLoop，以实现桌面端的快进行为
             gameLoop.setFastFwdMode(runState == GameState.GAME_FAST_FWD);
             gameLoop.tick(stateIndex -> gameState.nextState());
+
+            // 胜负转换时执行平台副作用（原版 endGame 中的 SharedPreferences 部分）
+            int rs = gameState.getRunState();
+            if (rs != lastRunState) {
+                if (rs == GameState.GAME_WON) {
+                    com.rdefense.core.game.RewardData.gameWon(game.getPlayerPrefs());
+                    game.getGameSaveManager().clearQuickSave();
+                } else if (rs == GameState.GAME_LOST) {
+                    game.getGameSaveManager().clearQuickSave();
+                }
+                lastRunState = rs;
+            }
+            // 每 10 关自动快速存档（原版 QuickSave.saveState(this, false)）
+            if (gameState.consumeAutoSaveRequest()) {
+                game.getGameSaveManager().quickSave(gameState);
+            }
         } catch (Exception e) {
             Gdx.app.error("GamePlayScreen", "更新失败: " + e.getMessage());
         }
@@ -278,9 +301,11 @@ public class GamePlayScreen extends GameScreen {
                 break;
             case GameState.GAME_LOST:
                 uiRenderer.renderGameOverOverlay("游戏结束", "点击重试");
+                uiRenderer.renderScoreOverlay(gameState);
                 break;
             case GameState.GAME_WON:
                 uiRenderer.renderGameOverOverlay("胜利！", "点击继续");
+                uiRenderer.renderScoreOverlay(gameState);
                 break;
             case GameState.GAME_NOT_STARTED:
                 uiRenderer.renderGameOverOverlay("星际塔防", "点击开始");
