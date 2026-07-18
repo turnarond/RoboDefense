@@ -25,11 +25,11 @@ public final class BulletData {
     public static final int NAPALM_SHELL = 13;  // 凝固汽油弹
     public static final int SLOW_FIRE = 14;     // 缓慢火焰弹（无精灵图）
 
-    // 溅射半径平方
-    public static final int SPLASH_RADIUS_SQ = 2500;
+    // 溅射半径平方：原版 GRID_PIXEL_SIZE²/4 = 32*32/4
+    public static final int SPLASH_RADIUS_SQ = 256;
 
-    // 地雷爆炸半径平方（与原版一致）
-    public static final int MINE_RADIUS_SQ = 2500;
+    // 地雷爆炸半径平方：原版 GRID_PIXEL_SIZE*2*GRID_PIXEL_SIZE = 32*2*32
+    public static final int MINE_RADIUS_SQ = 2048;
 
     // 减速持续时间（帧）
     public static final int SLOW_DURATION = 120;

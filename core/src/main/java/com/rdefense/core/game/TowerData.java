@@ -95,7 +95,8 @@ public final class TowerData {
             case 13: return 40;
             // 导弹塔系列
             case 14: return 70;
-            case 15: return 90;
+            // 廉价花炮（奖励14）解锁后高级 SAM 降为 50（原版 applyTowerAwards）
+            case 15: return RewardData.getLevel(RewardData.CHEAP_FIREWORKS) > 0 ? 50 : 90;
             // 迫击炮系列
             case 16: return 50;
             case 17: return 90;
@@ -468,9 +469,9 @@ public final class TowerData {
             value += cost(current) / 2;
             current = downgradeType(current);
         }
-        // 跳蚤市场：出售价值翻倍
+        // 跳蚤市场：出售价值 ×1.5（原版 value + value/2）
         if (RewardData.rewardLevel(RewardData.FLEA_MARKET) > 0) {
-            value *= 2;
+            value += value / 2;
         }
         return value;
     }

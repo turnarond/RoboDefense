@@ -253,7 +253,8 @@ public final class EnemyData {
      */
     public static int speed(int type) {
         EnemyProp prop = enemy_props[type];
-        return prop != null ? prop.speed : 10;
+        // 原版：(speed * GRID_PIXEL_SIZE) / 40，本项目网格 32px
+        return prop != null ? (prop.speed * 32) / 40 : 10;
     }
 
     /**
@@ -326,7 +327,9 @@ public final class EnemyData {
      * 死亡动画帧数
      */
     public static int deathFrames(int type) {
-        return 10;
+        // 原版：(价值 << 1) + 10，高价值敌人死亡动画更长（泰坦 510 帧）
+        EnemyProp prop = enemy_props[type];
+        return prop != null ? (prop.value << 1) + 10 : 10;
     }
 
     /**
