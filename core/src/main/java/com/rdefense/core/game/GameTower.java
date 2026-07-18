@@ -147,6 +147,12 @@ public final class GameTower extends GridObject {
             case 13: // 激光
                 if (EnemyData.isFlyer(e.getType())) return false;
                 break;
+            case BulletData.MINE: // 11 地雷：无空中打击（奖励20）时不打飞行单位
+                if (EnemyData.isFlyer(e.getType())
+                        && RewardData.getLevel(RewardData.AIR_BURST) == 0) {
+                    return false;
+                }
+                break;
         }
         // 检查实际像素距离是否小于攻击半径
         // 原版使用格子左上角作为基准：(gridx * GRID_PIXEL_SIZE)
@@ -248,8 +254,9 @@ public final class GameTower extends GridObject {
 
         // 对全体敌人施加减速和灼烧
         for (Enemy e = game_state.getEnemyList(); e != null; e = e.next) {
-            e.applyDamage(effectiveLength * 30, BulletData.SLOW);  // 减速
-            e.setFireCounter(fireAmount);                           // 直接设置灼烧值
+            e.applyDamage(effectiveLength * 30, BulletData.SLOW); // 减速
+            e.applyDamage(fireAmount, 10);                        // 直接火焰伤害（原版第二段）
+            e.setFireCounter(fireAmount);                         // 持续灼烧
         }
 
         // 冲击波视觉特效（全屏闪烁）

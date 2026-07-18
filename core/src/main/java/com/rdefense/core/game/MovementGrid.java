@@ -41,6 +41,7 @@ public final class MovementGrid {
     private boolean cachedTowerResult;
     private int cachedTowerX = -1;
     private int cachedTowerY = -1;
+    private byte[] lastTrialGrid; // 最近一次 searchGreedy 的试算网格，供敌人占格检查
 
     public MovementGrid(LevelData level_data, int pathNum) {
         this.levelData = level_data;
@@ -225,9 +226,17 @@ public final class MovementGrid {
             cachedTowerY = towerY;
             cachedTowerResult = searchGreedy(tower_list, towerX, towerY, true, enemy_list != null);
 
-            // 注意：原代码中有一个敌人位置检查，但逻辑有误
-            // （在 BFS 之前检查 trialGrid[enemyPos] == 0，导致总是返回 false）
-            // 已移除该检查，因为 searchGreedy 已经正确检查了路径是否可达
+            // 原版检查：BFS 后若本路径敌人所站格仍不可达（未被寻路标记），
+            // 说明放塔会困住该敌人 → 拒绝放置（原版 MovementGrid.java:50-64）
+            if (cachedTowerResult && enemy_list != null && lastTrialGrid != null) {
+                for (Enemy e = enemy_list; e != null; e = e.next) {
+                    if (e.getPathNum() == pathIdx
+                            && lastTrialGrid[(e.getGridY() * gridW) + e.getGridX()] == CELL_EMPTY) {
+                        cachedTowerResult = false;
+                        break;
+                    }
+                }
+            }
         }
         return cachedTowerResult;
     }
@@ -378,6 +387,7 @@ public final class MovementGrid {
 
         if (blockingTower) {
             trialGrid[gridW * towerY + towerX] = CELL_TOWER;
+            this.lastTrialGrid = trialGrid;
             return findPathGreedy(trialGrid, iterateAll);
         }
         return true;

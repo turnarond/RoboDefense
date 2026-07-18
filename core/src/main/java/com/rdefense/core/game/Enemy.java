@@ -202,10 +202,10 @@ public class Enemy extends GridObject {
         }
         // 火焰弹/冲击波：施加灼烧效果（无直接伤害）
         if (shot_type == 6 || shot_type == 14 || shot_type == BulletData.SLOW_FIRE) {
-            int oldFire = this.fire_counter;
+            // 原版语义：每次命中至多 +4，且封顶到本次弹药的 amount（可缩短已有灼烧）
             this.fire_counter += 4;
             if (this.fire_counter > amount) {
-                this.fire_counter = Math.max(oldFire, amount); // 不缩短已有灼烧
+                this.fire_counter = amount;
             }
             // 类型14（冲击波/缓慢火焰弹）同时施加减速效果
             if ((shot_type == 14 || shot_type == BulletData.SLOW_FIRE) && this.slow_counter < amount) {

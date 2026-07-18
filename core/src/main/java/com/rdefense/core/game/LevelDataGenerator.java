@@ -106,10 +106,8 @@ public final class LevelDataGenerator {
         int num_groups = (features & GROUPS_MASK) + 1;
         int health_per_group = health / num_groups;
 
-        // TOUGH_MASK (bit 2,3,4): 如果为 0，增加 25% 生命值
-        if ((features & TOUGH_MASK) == 0) {
-            health_per_group = health_per_group + (health_per_group * HEALTH_TOUGH_PCT) / 100;
-        }
+        // 原版此分支为死代码（计算结果赋给未使用的局部变量），保真起见不生效。
+        // 保留注释以说明 TOUGH_MASK 在原版即无实际作用。
 
         // TYPE_MASK (bit 5,6): 控制飞行单位
         if ((features & TYPE_MASK) == 0) {
