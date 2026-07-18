@@ -243,3 +243,31 @@ gps.configureLevel(map, diff); // 新游戏（关卡选择）
 - `GameState.gameWonAchievements()` — 胜利时全部检测（难度/地图/特殊成就）
 - `GameState.endGame()` → `gameWonAchievements()`
 - `GameTower.handleMine()` — 地雷链成就
+
+## APK 保真修复记录（2026-07-17〜18）
+
+基于 `docs/06-APK差距分析报告.md` 完成四轮修复（计划①〜④），覆盖全部 6 个 P0 与约 34 条 P1。
+
+### 已修复的关键偏差
+- 恢复 `saveScore` 四奖金结算（20% 胜利奖金 + 1% 生命奖金 + 20% 完美奖金 + 金钱×难度×2）
+- 恢复 `RewardData.gameWon` 难度递增体系
+- 恢复成就弹窗链路（dequeueEarned → showAchievement，经 GamePlayScreen 轮询）
+- 实现混合器 5 位数码选择面板（LevelSelectScreen 内嵌，解除 mixerValue 死锁）
+- 实现 ScoreOverlay 结算动画、Starfield 星空粒子、控制按钮接入
+- 击杀得分除数 500、逐图分数倍率保真（含 skytower 第 7 种地图）
+- 数值保真 10 项（溅射半径 2500→256、出售倍率 2×→1.5×、死亡帧 10→(value<<1)+10 等）
+- 存档补全 10 个字段（8 个成就追踪 + at_exit/exiting_grid）
+- 健壮性（事件/敌人上限安全网、读档强制暂停、自动存档请求、消息槽位、HUD 千位分隔）
+- 死代码清理（HudRenderer、tower_pool、GameRewardCalculator）
+
+### 新发现（此前文档需订正）
+- 原版共 **7 种地图**（0-6，含 skytower），非此前记载的 6 种
+- `HudRenderer` 为死代码——HUD 实际由 `GamePlayScreen` 直接渲染
+- `GameRewardCalculator` 系数表（ICE/LAVA/EXTREME）为臆造，已删除
+- 保真决策点：Z_ACCEL 保留当前（更物理正确的弹道）、TOUGH_MASK 恢复原版死代码、敌人拒放检查恢复、灼烧封顶恢复原版
+
+### 计划文件
+- `docs/06-APK差距分析报告.md` — 60 类全覆盖差距分析
+- `docs/superpowers/plans/2026-07-17-apk-parity-fix-1-scoring-numeric.md` — 计划① 结算/数值/健壮性
+- `docs/superpowers/plans/2026-07-17-apk-parity-fix-2-achievements.md` — 计划② 成就/存档/事件/HUD
+- `docs/superpowers/plans/2026-07-17-apk-parity-fix-3-ui.md` — 计划③ 混合器/UI/星空
