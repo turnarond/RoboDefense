@@ -1,6 +1,7 @@
 package com.rdefense.core.game;
 
 import com.rdefense.core.save.db.GameSaveManager;
+import com.rdefense.core.save.PlayerPrefs;
 
 /**
  * 奖励数据管理类 - 完全复刻原版 Android 版本的奖励系统
@@ -91,6 +92,18 @@ public final class RewardData {
         reward_points += points;
         if (saveManager != null) {
             saveManager.setRewardPoints(reward_points);
+        }
+    }
+
+    /**
+     * 游戏胜利：当前难度 +1，并更新最高通关难度（原版 RewardData.gameWon）
+     */
+    public static void gameWon(PlayerPrefs prefs) {
+        int level = prefs.getDifficulty();
+        int maxLevelWon = prefs.getMaxLevelWon();
+        prefs.putDifficulty(level + 1);
+        if (level > maxLevelWon) {
+            prefs.putMaxLevelWon(level);
         }
     }
 
