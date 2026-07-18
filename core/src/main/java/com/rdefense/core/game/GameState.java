@@ -1027,13 +1027,30 @@ public final class GameState {
                 gridy >= 0 && gridy < this.level_data.getGridHeight();
     }
 
-    /**
-     * 显示错误消息
-     */
+    /** 显示短消息（原版 showMessage，45 帧） */
+    public void showMessage(String message) {
+        createMessageEvent(message, 45);
+    }
+
+    /** 显示错误消息（原版 showError，90 帧） */
     public void showError(String message) {
-        GameEvent e = allocateGameEvent(GameEvent.EVENT_MESSAGE);
-        e.str = message;
-        e.var[GameEvent.VAR_MESSAGE_FRAMES] = 90;
+        createMessageEvent(message, 90);
+    }
+
+    /** 创建消息事件：分配 0-9 号不重叠槽位，+30 帧淡入（原版 createMessageEvent） */
+    private void createMessageEvent(String message, int display_frames) {
+        int used_slots = 0;
+        for (GameEvent e = getGameEventList(GameEvent.EVENT_MESSAGE); e != null; e = e.next) {
+            used_slots |= 1 << e.var[GameEvent.VAR_MESSAGE_Y_SLOT];
+        }
+        int slot_num = 0;
+        while (slot_num < 10 && ((1 << slot_num) & used_slots) != 0) {
+            slot_num++;
+        }
+        GameEvent e2 = allocateGameEvent(GameEvent.EVENT_MESSAGE);
+        e2.str = message;
+        e2.var[GameEvent.VAR_MESSAGE_FRAMES] = display_frames + 30;
+        e2.var[GameEvent.VAR_MESSAGE_Y_SLOT] = slot_num;
     }
 
     // ========== Getter 方法 ==========
