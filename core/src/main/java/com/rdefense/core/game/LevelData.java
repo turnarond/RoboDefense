@@ -30,6 +30,7 @@ public final class LevelData {
     private int path_num;
     private int level_score_multiplier;
     private boolean is_fixed_path;
+    private Starfield starfield;
     
     // 缓存字段，避免重复生成关卡
     private int generated_seed = -1;
@@ -217,6 +218,7 @@ public final class LevelData {
                 path_obstacles = new int[]{50397441, 100729090, 33751297, 84082945, 50594305, 33882369, 50725377, 101057025, 34013441, 84345089, 17367041, 67698945, 101253377, 34210049, 84541697, 34276353, 101449985, 34407425, 34472193, 84803841, 17760513, 51314945, 101646593, 34668801, 85000449, 51511553, 101843457, 34799873, 68354561, 51642625, 34931713, 102105347, 18285057, 35127553};
                 width = 9;
                 height = 26;
+                this.starfield = new Starfield(level_seed);
                 break;
             case SKYTOWER_LEVEL:
                 path_start = new int[]{771, 264};
@@ -226,6 +228,7 @@ public final class LevelData {
                         67436802, 151323138, 251986178, 67633410, 252182786, 50987777, 235537153};
                 width = 20;
                 height = 12;
+                this.starfield = new Starfield(level_seed);
                 break;
             case MIXER_LEVEL:
                 // 混合器模式：使用种子码动态生成布局
@@ -263,6 +266,13 @@ public final class LevelData {
         this.level_score_multiplier = (this.level_type >= 0
                 && this.level_type < SCORE_MULTIPLIERS.length)
                 ? SCORE_MULTIPLIERS[this.level_type] : 100;
+
+        // 星空粒子背景（仅公路/宇宙关卡）
+        if (this.level_type == ROADWAY_LEVEL || this.level_type == SKYTOWER_LEVEL) {
+            this.starfield = new Starfield(this.level_seed);
+        } else {
+            this.starfield = null;
+        }
     }
 
     /**
@@ -301,6 +311,7 @@ public final class LevelData {
     public int getUnitPathNum() { return path_num; }
     public int getScoreMultiplier() { return level_score_multiplier; }
     public boolean isFixedPath() { return is_fixed_path; }
+    public Starfield getStarfield() { return starfield; }
     
     public int getIndex() { return index; }
     public void setIndex(int index) { this.index = index; }

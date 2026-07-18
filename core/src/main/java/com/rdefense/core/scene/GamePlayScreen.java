@@ -10,6 +10,7 @@ import com.rdefense.core.game.EnemyData;
 import com.rdefense.core.game.GameEvent;
 import com.rdefense.core.game.GameState;
 import com.rdefense.core.game.GameTower;
+import com.rdefense.core.game.Starfield;
 import com.rdefense.core.game.TowerData;
 import com.rdefense.core.platform.GameRenderer;
 import com.rdefense.core.platform.libgdx.LibGdxInputAdapter;
@@ -261,6 +262,13 @@ public class GamePlayScreen extends GameScreen {
         int runState = gameState.getRunState();
         int levelType = gameState.getLevelData().getLevelType();
 
+        // 0. 星空粒子背景（宇宙/公路关卡）
+        com.rdefense.core.game.Starfield sf = gameState.getLevelData().getStarfield();
+        if (sf != null) {
+            sf.update();
+            sf.draw(renderer, 0, 0);
+        }
+
         // 1. 绘制地图背景
         drawBackground(renderer, levelType);
 
@@ -343,6 +351,14 @@ public class GamePlayScreen extends GameScreen {
         renderer.begin();
         // 在世界坐标原点绘制地图（会被相机变换映射到正确位置）
         renderer.drawSprite(bgName, 0, 0, worldW, worldH);
+
+        // 星空粒子背景（公路/宇宙关卡）
+        Starfield starfield = gameState.getLevelData().getStarfield();
+        if (starfield != null) {
+            starfield.update();
+            starfield.draw(renderer, 0, 0);
+        }
+
         renderer.end();
     }
 
