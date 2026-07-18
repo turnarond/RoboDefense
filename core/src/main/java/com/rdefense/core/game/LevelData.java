@@ -257,7 +257,12 @@ public final class LevelData {
                 break;
         }
 
-        this.level_score_multiplier = 100 + (this.level_type * 25);
+        // 原版逐图倍率：basic=100, ruins=125, factory=140, courtyard=160,
+        // mixer=180, roadway=100, skytower=125
+        final int[] SCORE_MULTIPLIERS = {100, 125, 140, 160, 180, 100, 125};
+        this.level_score_multiplier = (this.level_type >= 0
+                && this.level_type < SCORE_MULTIPLIERS.length)
+                ? SCORE_MULTIPLIERS[this.level_type] : 100;
     }
 
     /**

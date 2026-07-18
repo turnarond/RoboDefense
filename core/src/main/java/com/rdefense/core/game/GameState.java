@@ -222,7 +222,8 @@ public final class GameState {
         // 播放敌人被击败音效
         com.rdefense.core.audio.SoundManager.getInstance().playEnemyDefeated();
 
-        int base_score_add = Math.max(1, (ge.getMaxHealth() * this.level_data.getScoreMultiplier()) / 100);
+        // 原版除数 500（C.EVENT_ALLOCATION_SANITY_LIMIT），且允许 0 分击杀
+        int base_score_add = (ge.getMaxHealth() * this.level_data.getScoreMultiplier()) / 500;
         int kill_bonus = getEnemyKillBonus();
         GameEvent e = allocateGameEvent(GameEvent.EVENT_ENEMY_DEFEATED);
         e.var[GameEvent.VAR_ENEMY_STATE_IDX] = this.state_index;
@@ -1011,7 +1012,13 @@ public final class GameState {
     public int getRunState() { return run_state; }
     public int getStartingHealth() { return starting_health; }
     public int getDifficultyLevel() { return difficulty_level; }
-    public int getEnemyKillBonus() { return this.level_bonus; }
+    public int getEnemyKillBonus() {
+        int bonus = this.level_bonus + AchievementData.totalCount();
+        if (RewardData.getLevel(RewardData.BONUS) > 0) {
+            return bonus * 2;
+        }
+        return bonus;
+    }
     public int activeEventCount() { return active_events; }
     public LevelData getLevelData() { return level_data; }
     public GridObject getSortedList() { return grid_order.getSortedList(); }
