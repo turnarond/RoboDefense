@@ -52,4 +52,13 @@ public final class FastRandom {
 
         return val;
     }
+
+    /**
+     * 获取 [0, bound) 范围内的随机数
+     * @param bound 上限（不含）
+     */
+    public static int nextInt(int bound) {
+        if (bound <= 0) throw new IllegalArgumentException("bound must be positive: " + bound);
+        return random.nextInt(bound);
+    }
 }

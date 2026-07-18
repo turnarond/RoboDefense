@@ -23,6 +23,7 @@ import com.rdefense.core.save.db.GameSaveManager;
 public class MainMenuScreen extends GameScreen {
 
     private final String bgSprite;
+    private boolean showNewGameConfirm = false;
 
     public MainMenuScreen(RoboDefenseGame game) {
         super(game);
@@ -45,10 +46,32 @@ public class MainMenuScreen extends GameScreen {
         int sh = Gdx.graphics.getHeight();
         int cx = sw / 2;
 
+        // 新游戏确认对话框（优先于按钮处理）
+        if (showNewGameConfirm) {
+            int dlgX = cx - 120;
+            int dlgY = sh / 2 - 40;
+            if (inRect(x, y, dlgX + 30, dlgY + 45, 70, 25)) {
+                GameSaveManager saveMgr = game.getGameSaveManager();
+                if (saveMgr != null) saveMgr.clearQuickSave();
+                switchScreen(new LevelSelectScreen(game));
+            } else {
+                showNewGameConfirm = false;
+            }
+            return;
+        }
+
         // 主按钮：开始游戏
         int mainW = 220, mainH = 48;
         int mainX = cx - mainW / 2, mainY = sh / 2 + 20;
-        if (inRect(x, y, mainX, mainY, mainW, mainH)) { startNewGame(); return; }
+        if (inRect(x, y, mainX, mainY, mainW, mainH)) {
+            GameSaveManager saveMgr = game.getGameSaveManager();
+            if (saveMgr != null && saveMgr.hasQuickSave()) {
+                showNewGameConfirm = true;
+            } else {
+                switchScreen(new LevelSelectScreen(game));
+            }
+            return;
+        }
 
         // 次要按钮：继续 + 载入
         int secW = 140, secH = 38, secGap = 16;
@@ -177,6 +200,18 @@ public class MainMenuScreen extends GameScreen {
         long pts = RewardData.getRewardPoints();
         r.drawText("奖励积分  " + pts, 16, 26, 0.8f, 0.72f, 0.28f, 1.0f);
         r.drawText("V2.5.0 Build 2900", sw - 120, 26, 0.45f, 0.5f, 0.6f, 0.8f);
+
+        // 7. 新游戏确认对话框
+        if (showNewGameConfirm) {
+            int dlx = cx - 120;
+            int dly = sh / 2 - 40;
+            r.drawRect(dlx, dly, 240, 80, 0.05f, 0.08f, 0.15f, 0.95f);
+            r.drawText("已有快速存档，是否覆盖？", dlx + 20, dly + 15, 1f, 1f, 1f, 1f);
+            r.drawRect(dlx + 30, dly + 45, 70, 25, 0.15f, 0.6f, 0.15f, 1f);
+            r.drawText("确定", dlx + 48, dly + 50, 1f, 1f, 1f, 1f);
+            r.drawRect(dlx + 140, dly + 45, 70, 25, 0.6f, 0.2f, 0.2f, 1f);
+            r.drawText("取消", dlx + 158, dly + 50, 1f, 1f, 1f, 1f);
+        }
 
         r.end();
     }
