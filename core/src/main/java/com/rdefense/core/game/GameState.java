@@ -149,6 +149,8 @@ public final class GameState {
      */
     public void nextState() {
         recycleGameEvents();
+        // 原版 dequeueAchievements：将待显示成就转为事件
+        dequeueAchievements();
 
         if (this.run_state == GAME_RUNNING || this.run_state == GAME_FAST_FWD) {
             this.state_index++;
@@ -418,6 +420,17 @@ public final class GameState {
         AchievementData.increaseLevel(AchievementData.EXPERIENCED, 1);
         AchievementData.increaseLevel(AchievementData.ADDICT, 1);
         this.unit_created_this_level = false;
+    }
+
+    /** 原版 dequeueAchievements：从成就队列取出新达成项并分配事件（类型 10） */
+    private void dequeueAchievements() {
+        for (int type = AchievementData.dequeueEarned(); type >= 0;
+                type = AchievementData.dequeueEarned()) {
+            GameEvent e = allocateGameEvent(GameEvent.EVENT_ACHIEVEMENT_EARNED);
+            e.var[GameEvent.VAR_ACHIEVEMENT_TYPE] = type;
+            e.var[GameEvent.VAR_ACHIEVEMENT_FRAME] = 0;
+            e.var[GameEvent.VAR_ACHIEVEMENT_STATE] = 0;
+        }
     }
 
     /**

@@ -218,6 +218,12 @@ public class GamePlayScreen extends GameScreen {
             gameLoop.setFastFwdMode(runState == GameState.GAME_FAST_FWD);
             gameLoop.tick(stateIndex -> gameState.nextState());
 
+            // 成就弹窗：轮询队列并触发渲染器动画
+            int achievementType = com.rdefense.core.game.AchievementData.dequeueEarned();
+            if (achievementType >= 0) {
+                game.getAchievementRenderer().showAchievement(achievementType);
+            }
+
             // 胜负转换时执行平台副作用（原版 endGame 中的 SharedPreferences 部分）
             int rs = gameState.getRunState();
             if (rs != lastRunState) {
@@ -289,6 +295,10 @@ public class GamePlayScreen extends GameScreen {
         uiRenderer.updatePlacementFailure();
         // 绘制短消息（如 HD 回退提示）
         uiRenderer.renderShortMessage();
+
+        // 8.2 更新和绘制成就弹窗动画
+        game.getAchievementRenderer().update(game.getServices().getAudio());
+        game.getAchievementRenderer().draw(renderer);
 
         // 9. 状态覆盖层
         switch (runState) {
