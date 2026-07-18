@@ -664,7 +664,40 @@ public final class GameState {
     }
 
     /**
-     * 结束游戏
+     * 结算奖励积分（原版 saveScore）：输/赢/退出都按 score 结算；
+     * 胜利额外四种奖金。产生 EVENT_SCORE_SAVED 供结算界面显示。
+     */
+    private void saveScore(int new_run_state) {
+        if (this.score > 0) {
+            int won_bonus = 0;
+            int health_bonus = 0;
+            int perfect_bonus = 0;
+            int money_bonus = 0;
+            if (new_run_state == GAME_WON) {
+                won_bonus = (this.score * 20) / 100;
+                health_bonus = (this.score * this.health) / 100;
+                if (this.health == this.starting_health) {
+                    perfect_bonus = (this.score * 20) / 100;
+                }
+                money_bonus = this.money * this.difficulty_level * 2;
+            }
+            GameEvent e = allocateGameEvent(GameEvent.EVENT_SCORE_SAVED);
+            e.var[GameEvent.VAR_SCORE_FRAME_INDEX] = 0;
+            e.var[GameEvent.VAR_SCORE_STATE] = 0;
+            e.var[GameEvent.VAR_SCORE_ADD] = this.score;
+            e.var[GameEvent.VAR_SCORE_WON_BONUS] = won_bonus;
+            e.var[GameEvent.VAR_SCORE_HEALTH_BONUS] = health_bonus;
+            e.var[GameEvent.VAR_SCORE_PERFECT_BONUS] = perfect_bonus;
+            e.var[GameEvent.VAR_SCORE_MONEY_BONUS] = money_bonus;
+            RewardData.addRewardPoints((long) this.score + won_bonus + health_bonus
+                    + money_bonus + perfect_bonus);
+            this.score = 0;
+        }
+    }
+
+    /**
+     * 结束游戏（原版 endGame）：先结算积分与成就，再重置。
+     * 难度持久化递增与清快速存档由 GamePlayScreen 在状态转换处执行。
      */
     public void endGame(int new_run_state) {
         if (this.run_state == GAME_RUNNING || this.run_state == GAME_PAUSED ||
@@ -674,17 +707,15 @@ public final class GameState {
                 if (new_run_state == GAME_WON) {
                     // 成就检测（必须在 initGame 之前，因为 initGame 会重置标志）
                     gameWonAchievements();
-                    // 使用新版积分计算器
-                    long rewardPoints = GameRewardCalculator.calculateSimple(
-                        this.difficulty_level,
-                        this.level_data.getLevelType()
-                    );
-                    RewardData.addRewardPoints(rewardPoints);
                 }
-                initGame(this.level_data.getLevelType());
+                // 输/赢/退出都结算积分（原版行为；使用重置前的 score/health/money）
+                saveScore(new_run_state);
+                // 保留当前难度（旧代码经单参 initGame 误重置为 1）
+                initGame(this.level_data.getLevelType(), this.difficulty_level);
                 this.run_state = new_run_state;
             }
         }
+        AchievementData.trySaveProgress();
     }
 
     /**
