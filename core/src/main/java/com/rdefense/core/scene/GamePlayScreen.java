@@ -496,7 +496,7 @@ public class GamePlayScreen extends GameScreen {
 
         renderer.drawText("L:" + gameState.getLevelData().getLevelNum(), xStart, yTop,
                 0.9f, 0.95f, 1.0f, 1.0f);
-        renderer.drawText("$" + gameState.getMoney(), xStart + 80, yTop,
+        renderer.drawText("$" + formatWithCommas(gameState.getMoney()), xStart + 80, yTop,
                 0.3f, 1.0f, 0.3f, 1.0f);
         // 生命值 + 血量条
         int hp = gameState.getHealth();
@@ -520,7 +520,12 @@ public class GamePlayScreen extends GameScreen {
         }
 
         // 显示分数
-        String scoreText = "PTS:" + score;
+        String scoreText;
+        if (score >= 1000) {
+            scoreText = "PTS:" + formatWithCommas(score);
+        } else {
+            scoreText = "PTS:" + score;
+        }
         if (pendingScore > 0) {
             scoreText += " +" + pendingScore;
         }
@@ -819,6 +824,20 @@ public class GamePlayScreen extends GameScreen {
         button.selected = false;
 
         return button;
+    }
+
+    /** 千位分隔格式化（原版 HudEntry.makeNumber） */
+    private static String formatWithCommas(int value) {
+        String s = Integer.toString(value);
+        StringBuilder sb = new StringBuilder(s.length() + 2);
+        int start = s.length() % 3;
+        if (start == 0) start = 3;
+        sb.append(s, 0, start);
+        for (int i = start; i < s.length(); i += 3) {
+            sb.append(',');
+            sb.append(s, i, Math.min(i + 3, s.length()));
+        }
+        return sb.toString();
     }
 
     /**
