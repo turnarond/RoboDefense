@@ -106,7 +106,7 @@ public class GameSceneRenderer {
         renderer.applyCameraTransform(0, 0, 1.0f);
 
         // HUD（自持 batch)
-        drawHud(gameState, stateIndex, currentFps, batteryLevel);
+        drawHud(gameState, currentFps, batteryLevel);
 
         // 塔精灵（先绘制，避免遮盖名称/价格文字）
         drawTowerButtonSprites();
@@ -369,7 +369,7 @@ public class GameSceneRenderer {
      * 绘制 HUD 信息栏
      * HUD 使用屏幕坐标，相机变换已在 renderScreenLayer 中设置
      */
-    private void drawHud(GameState gameState, int stateIndex, int currentFps, int batteryLevel) {
+    private void drawHud(GameState gameState, int currentFps, int batteryLevel) {
         renderer.begin();
         int screenW = renderer.getScreenWidth();
         int screenH = renderer.getScreenHeight();
@@ -402,9 +402,8 @@ public class GameSceneRenderer {
 
         // 从敌人击败事件中读取待添加的分数（只读——不修改游戏数据）
         for (GameEvent e = gameState.getGameEventList(GameEvent.EVENT_ENEMY_DEFEATED); e != null; e = e.next) {
-            int fs = e.var[GameEvent.VAR_ENEMY_FULL_SCORE];
-            if (fs != 0 && e.var[GameEvent.VAR_ENEMY_STATE_IDX] == stateIndex) {
-                pendingScore += fs;
+            if (e.var[GameEvent.VAR_ENEMY_FULL_SCORE] > 0) {
+                pendingScore += e.var[GameEvent.VAR_ENEMY_FULL_SCORE];
             }
         }
 
