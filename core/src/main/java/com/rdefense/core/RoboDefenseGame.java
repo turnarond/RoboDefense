@@ -75,7 +75,10 @@ public class RoboDefenseGame extends ApplicationAdapter {
         // 2. 用 FreeType 从 simhei.ttf 生成支持中文的位图字体
         font = buildChineseFont(18);
 
-        // 3. 初始化渲染器（散装纹理模式，无需 TextureAtlas）
+        // 3. 初始化 FastRandom（必须在任何 Screen 创建前调——LevelSelectScreen 构造函数用它生成 mixer 种子）
+        com.rdefense.core.game.FastRandom.init();
+
+        // 4. 初始化渲染器（散装纹理模式，无需 TextureAtlas）
         renderer = new LibGdxRenderer(font);
         camera = new CameraManager();
         if (services.getRenderer() == null) {
