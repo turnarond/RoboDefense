@@ -221,20 +221,7 @@ public class UiRenderer {
     }
 
     public void renderControlButtons(int runState) {
-        renderer.begin();
-        int screenW = renderer.getScreenWidth();
-        // 控制按钮：文字标签，放在屏幕右下，塔按钮左侧
-        float btnX = screenW - 215;
-        float btnY = 26;
-        // 暂停/继续
-        String pauseLabel = (runState == 0 || runState == 4) ? "暂停" : "继续";
-        renderer.drawRect(btnX, btnY, 52, 22, 0.06f, 0.12f, 0.2f, 0.75f);
-        renderer.drawText(pauseLabel, btnX + 6, btnY + 15, 0.7f, 0.75f, 0.82f, 0.9f);
-        // 快进
-        String ffLabel = (runState == 4) ? "快进中" : "快进";
-        renderer.drawRect(btnX + 58, btnY, 52, 22, 0.06f, 0.12f, 0.2f, 0.75f);
-        renderer.drawText(ffLabel, btnX + 64, btnY + 15, 0.7f, 0.75f, 0.82f, 0.9f);
-        renderer.end();
+        // 键盘脚注条已在 HUD 中显示——文字标签冗余，移除
     }
 
     public void renderPauseOverlay(String pauseText) {
@@ -257,8 +244,8 @@ public class UiRenderer {
         if (options == null || !options.optionValue(6)) return;
         int screenW = renderer.getScreenWidth();
         int screenH = renderer.getScreenHeight();
-        int barX = screenW / 2 - 75;
-        int barY = screenH - 38; // HUD 标题栏正上方 4px，屏幕可见区域内
+        int barX = 16; // 左侧，避开 PTS 和状态文字
+        int barY = screenH - 38;
         int barW = 150;
         int barH = 14;
         renderer.begin();

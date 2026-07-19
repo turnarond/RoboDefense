@@ -496,10 +496,10 @@ public class GameSceneRenderer {
             float iy = btn.screenY + (btn.height - ih) / 2f;
             // 底座
             renderer.drawSpriteFrame(sheet, 0, totalFrames, ix, iy, iw, ih);
-            // 转头（底座上方，参考 drawTowers）
+            // 转头（底座上方，参考 drawTowers 的 turretY = wy + towerHeight）
             if (totalFrames > 1) {
                 int towerH = TowerData.towerHeight(btn.towerType);
-                float turretY = iy + towerH * s;
+                float turretY = iy + towerH * s * 1.2f; // +20% 上移，避免偏下
                 renderer.drawSpriteFrame(sheet, 1, totalFrames, ix, turretY, iw, ih);
             }
         }
