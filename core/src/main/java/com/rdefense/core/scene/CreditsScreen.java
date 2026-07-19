@@ -82,9 +82,7 @@ public class CreditsScreen extends GameScreen {
         // 返回按钮
         int bw = 100, bh = 34;
         int bx = sw - bw - 16, by = 14;
-        r.drawRect(bx, by, bw, bh, 0.08f, 0.12f, 0.25f, 0.88f);
-        r.drawRect(bx, by + bh - 1, bw, 1, 0.2f, 0.3f, 0.5f, 0.6f);
-        r.drawText("返回", bx + 28, by + 13, 0.78f, 0.82f, 0.88f, 1.0f);
+        drawBackButton(bx, by, bw, bh);
 
         r.end();
     }

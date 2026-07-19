@@ -308,9 +308,7 @@ public class LevelSelectScreen extends GameScreen {
         }
 
         // ========== 底部按钮 ==========
-        r.drawRect(backX, backY, backW, backH, 0.08f, 0.12f, 0.25f, 0.88f);
-        r.drawRect(backX, backY + backH - 1, backW, 1, 0.2f, 0.3f, 0.5f, 0.6f);
-        r.drawText("返回", backX + backW/2 - 12, backY + 15, 0.78f, 0.82f, 0.88f, 1.0f);
+        drawBackButton(backX, backY, backW, backH);
 
         float sr = unlocked ? 0.08f : 0.18f, sg = unlocked ? 0.28f : 0.15f, sb = unlocked ? 0.12f : 0.1f;
         r.drawRect(startX, startY, startW, startH, sr, sg, sb, 0.92f);

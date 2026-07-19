@@ -114,9 +114,7 @@ public class RewardScreen extends GameScreen implements InputProcessor {
         // 返回按钮
         int backX = screenWidth - BUTTON_WIDTH - 16;
         int backY = 16;
-        renderer.drawRect(backX, backY, BUTTON_WIDTH, BUTTON_HEIGHT, 0.08f, 0.12f, 0.25f, 0.95f);
-        renderer.drawRect(backX, backY, BUTTON_WIDTH, BUTTON_HEIGHT, 0.2f, 0.3f, 0.5f, 0.95f);
-        renderer.drawText("返回", backX + 28, backY + BUTTON_HEIGHT - 10, 0.85f, 0.9f, 0.9f, 1.0f);
+        drawBackButton(backX, backY, BUTTON_WIDTH, BUTTON_HEIGHT);
 
         renderer.end();
     }

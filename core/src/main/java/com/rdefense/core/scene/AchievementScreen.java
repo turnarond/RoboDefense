@@ -211,9 +211,7 @@ public class AchievementScreen extends GameScreen implements InputProcessor {
         }
 
         // 返回
-        r.drawRect(backX, backY, backW, backH, 0.08f, 0.12f, 0.25f, 0.88f);
-        r.drawRect(backX, backY + backH - 1, backW, 1, 0.2f, 0.3f, 0.5f, 0.6f);
-        r.drawText("返回", backX + backW/2 - 12, backY + 13, 0.78f, 0.82f, 0.88f, 1.0f);
+        drawBackButton(backX, backY, backW, backH);
 
         r.end();
     }

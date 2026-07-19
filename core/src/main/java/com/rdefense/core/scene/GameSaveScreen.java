@@ -284,9 +284,7 @@ public class GameSaveScreen extends GameScreen {
         renderer.drawText("↑↓选择  Enter确认  ESC返回", 20, 28, 0.6f, 0.6f, 0.6f, 1.0f);
 
         // 返回按钮
-        renderer.drawRect(20, 20, 140, 45, 0.08f, 0.12f, 0.25f, 0.9f);
-        renderer.drawRect(20, 20, 140, 45, 0.2f, 0.3f, 0.5f, 0.9f);
-        renderer.drawText("返回", 60, 48, 1.0f, 1.0f, 1.0f, 1.0f);
+        drawBackButton(20, 20, 140, 45);
 
         renderer.end();
     }
