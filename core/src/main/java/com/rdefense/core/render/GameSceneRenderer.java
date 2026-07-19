@@ -11,7 +11,6 @@ import com.rdefense.core.game.GameTower;
 import com.rdefense.core.game.Starfield;
 import com.rdefense.core.game.TowerData;
 import com.rdefense.core.platform.GameRenderer;
-import com.rdefense.core.platform.libgdx.LibGdxRenderer;
 import com.rdefense.core.render.CameraManager;
 import com.rdefense.core.render.GameLoop;
 import com.rdefense.core.render.SpriteNames;
@@ -110,10 +109,9 @@ public class GameSceneRenderer {
      * 2. 前景层：绘制 images[frameIndex] 转头
      */
     public void drawTowers(GameRenderer renderer, GameState gameState, GameLoop gameLoop) {
-        LibGdxRenderer libGdxRenderer = (LibGdxRenderer) renderer;
         // 显式施加相机变换（与世界坐标绘制一致）
-        libGdxRenderer.applyCameraTransform(camera.getXBase(), camera.getYBase(), camera.getScale());
-        libGdxRenderer.begin();
+        renderer.applyCameraTransform(camera.getXBase(), camera.getYBase(), camera.getScale());
+        renderer.begin();
         for (GameTower t = gameState.getTowerList(); t != null; t = t.next) {
             int type = t.getType();
             int direction = t.getDirection();
@@ -133,12 +131,12 @@ public class GameSceneRenderer {
             float turretWorldY = wy + towerHeight;
 
             // 1. 绘制底座（帧 0）
-            libGdxRenderer.drawSpriteFrame(spriteSheetName, 0, totalFrames, wx, wy, towerSize, towerSize);
+            renderer.drawSpriteFrame(spriteSheetName, 0, totalFrames, wx, wy, towerSize, towerSize);
 
             // 2. 绘制转头（帧 frameIndex）
-            libGdxRenderer.drawSpriteFrame(spriteSheetName, frameIndex, totalFrames, wx, turretWorldY, towerSize, towerSize);
+            renderer.drawSpriteFrame(spriteSheetName, frameIndex, totalFrames, wx, turretWorldY, towerSize, towerSize);
         }
-        libGdxRenderer.end();
+        renderer.end();
     }
 
     /**
@@ -146,9 +144,8 @@ public class GameSceneRenderer {
      * 使用世界坐标直接绘制
      */
     public void drawEnemies(GameRenderer renderer, int stateIndex, GameState gameState) {
-        LibGdxRenderer libGdxRenderer = (LibGdxRenderer) renderer;
-        libGdxRenderer.applyCameraTransform(camera.getXBase(), camera.getYBase(), camera.getScale());
-        libGdxRenderer.begin();
+        renderer.applyCameraTransform(camera.getXBase(), camera.getYBase(), camera.getScale());
+        renderer.begin();
         for (Enemy e = gameState.getEnemyList(); e != null; e = e.next) {
             int wx = e.calcPixelX();
             int wy = e.calcPixelY();
@@ -168,13 +165,13 @@ public class GameSceneRenderer {
             int fireCounter = e.getFireCounter();
 
             if (slowCounter > 0 && fireCounter > 0) {
-                libGdxRenderer.drawSpriteFrame(spriteSheetName, frameIndex, totalFrames, wx, wy, size, size, 0.6f, 0.4f, 0.9f, 1.0f);
+                renderer.drawSpriteFrame(spriteSheetName, frameIndex, totalFrames, wx, wy, size, size, 0.6f, 0.4f, 0.9f, 1.0f);
             } else if (fireCounter > 0) {
-                libGdxRenderer.drawSpriteFrame(spriteSheetName, frameIndex, totalFrames, wx, wy, size, size, 1.0f, 0.5f, 0.1f, 1.0f);
+                renderer.drawSpriteFrame(spriteSheetName, frameIndex, totalFrames, wx, wy, size, size, 1.0f, 0.5f, 0.1f, 1.0f);
             } else if (slowCounter > 0) {
-                libGdxRenderer.drawSpriteFrame(spriteSheetName, frameIndex, totalFrames, wx, wy, size, size, 0.4f, 0.7f, 1.0f, 1.0f);
+                renderer.drawSpriteFrame(spriteSheetName, frameIndex, totalFrames, wx, wy, size, size, 0.4f, 0.7f, 1.0f, 1.0f);
             } else {
-                libGdxRenderer.drawSpriteFrame(spriteSheetName, frameIndex, totalFrames, wx, wy, size, size);
+                renderer.drawSpriteFrame(spriteSheetName, frameIndex, totalFrames, wx, wy, size, size);
             }
 
             // 血条（未满血时显示）
@@ -190,11 +187,11 @@ public class GameSceneRenderer {
                 float barY = wy + 1;
                 // 血条总宽度 = 敌人尺寸 - 左右边距
                 float barW = size - (barOffsetX * 2);
-                libGdxRenderer.drawRect(barX, barY, barW, barH, 0.8f, 0.0f, 0.0f, 0.9f);
-                libGdxRenderer.drawRect(barX, barY, barW * healthRatio, barH, 0.0f, 0.9f, 0.0f, 0.9f);
+                renderer.drawRect(barX, barY, barW, barH, 0.8f, 0.0f, 0.0f, 0.9f);
+                renderer.drawRect(barX, barY, barW * healthRatio, barH, 0.0f, 0.9f, 0.0f, 0.9f);
             }
         }
-        libGdxRenderer.end();
+        renderer.end();
     }
 
     /**
@@ -202,9 +199,8 @@ public class GameSceneRenderer {
      * 使用世界坐标直接绘制
      */
     public void drawBullets(GameRenderer renderer, int stateIndex, GameState gameState) {
-        LibGdxRenderer libGdxRenderer = (LibGdxRenderer) renderer;
-        libGdxRenderer.applyCameraTransform(camera.getXBase(), camera.getYBase(), camera.getScale());
-        libGdxRenderer.begin();
+        renderer.applyCameraTransform(camera.getXBase(), camera.getYBase(), camera.getScale());
+        renderer.begin();
 
         for (Bullet b = gameState.getBulletList(); b != null; b = b.next) {
             int size = b.getSize(stateIndex);
@@ -216,20 +212,20 @@ public class GameSceneRenderer {
                 int totalFrames = BulletData.getNumImages(b.getType());
                 if (totalFrames > 1) {
                     int directionIndex = b.getDirectionIndex();
-                    libGdxRenderer.drawSpriteFrame(imgName, directionIndex, totalFrames, wx, wy, size, size);
+                    renderer.drawSpriteFrame(imgName, directionIndex, totalFrames, wx, wy, size, size);
                 } else {
-                    libGdxRenderer.drawSprite(imgName, wx, wy, size, size);
+                    renderer.drawSprite(imgName, wx, wy, size, size);
                 }
             } else {
                 int color = BulletData.color(b.getType());
                 float r = ((color >> 16) & 0xFF) / 255.0f;
                 float g = ((color >> 8) & 0xFF) / 255.0f;
                 float bl = (color & 0xFF) / 255.0f;
-                libGdxRenderer.drawRect(wx, wy, size, size, r, g, bl, 1.0f);
+                renderer.drawRect(wx, wy, size, size, r, g, bl, 1.0f);
             }
         }
 
-        libGdxRenderer.end();
+        renderer.end();
     }
 
     /**
@@ -237,9 +233,8 @@ public class GameSceneRenderer {
      * 参考 Android 原版 Display.handleEnemyDefeatedMoneyAdd
      */
     public void drawEnemyDefeatedEvents(GameRenderer renderer, int stateIndex, GameState gameState) {
-        LibGdxRenderer libGdxRenderer = (LibGdxRenderer) renderer;
-        libGdxRenderer.applyCameraTransform(camera.getXBase(), camera.getYBase(), camera.getScale());
-        libGdxRenderer.begin();
+        renderer.applyCameraTransform(camera.getXBase(), camera.getYBase(), camera.getScale());
+        renderer.begin();
 
         for (GameEvent e = gameState.getGameEventList(GameEvent.EVENT_ENEMY_DEFEATED); e != null; e = e.next) {
             int dist = stateIndex - e.var[GameEvent.VAR_ENEMY_STATE_IDX];
@@ -277,8 +272,6 @@ public class GameSceneRenderer {
         int activeTowerId = uiRenderer.getActiveTowerId();
         if (activeTowerId < 0) return;
 
-        LibGdxRenderer libGdxRenderer = (LibGdxRenderer) renderer;
-
         // 使用输入事件中保存的网格坐标
         int gridX = uiRenderer.getActiveTowerGridX();
         int gridY = uiRenderer.getActiveTowerGridY();
@@ -288,15 +281,15 @@ public class GameSceneRenderer {
                 && TowerData.cost(activeTowerId) <= gameState.getMoney();
 
         // 应用相机变换（与世界坐标绘制一致）
-        libGdxRenderer.applyCameraTransform(camera.getXBase(), camera.getYBase(), camera.getScale());
-        libGdxRenderer.begin();
+        renderer.applyCameraTransform(camera.getXBase(), camera.getYBase(), camera.getScale());
+        renderer.begin();
 
         // 绘制攻击范围圈（原版使用攻击半径，单位是世界像素）
         float worldCenterX = gridX * GRID_PIXEL_SIZE + GRID_PIXEL_SIZE / 2f;
         float worldCenterY = gridY * GRID_PIXEL_SIZE + GRID_PIXEL_SIZE / 2f;
         int attackRadius = TowerData.attackRadius(activeTowerId);
         if (options == null || options.optionValue(OptionsData.SHOW_TURRET_RANGE)) {
-            libGdxRenderer.drawCircle(worldCenterX, worldCenterY, attackRadius,
+            renderer.drawCircle(worldCenterX, worldCenterY, attackRadius,
                     0.5f, 0.5f, 1.0f, 0.3f);
         }
 
@@ -308,7 +301,7 @@ public class GameSceneRenderer {
         float validB = valid ? 0.2f : 0.2f;
         float rectX = gridX * GRID_PIXEL_SIZE;
         float rectY = gridY * GRID_PIXEL_SIZE;
-        libGdxRenderer.drawRect(rectX, rectY,
+        renderer.drawRect(rectX, rectY,
                 GRID_PIXEL_SIZE, GRID_PIXEL_SIZE,
                 validR, validG, validB, previewAlpha);
 
@@ -333,16 +326,16 @@ public class GameSceneRenderer {
         float towerSize = GRID_PIXEL_SIZE;
 
         // 绘制底座 + 转头（与原版渲染一致）
-        libGdxRenderer.drawSpriteFrame(spriteSheetName, 0, totalFrames,
+        renderer.drawSpriteFrame(spriteSheetName, 0, totalFrames,
                 baseX, baseY,
                 towerSize, towerSize,
                 1.0f, 1.0f, 1.0f, 0.7f);
-        libGdxRenderer.drawSpriteFrame(spriteSheetName, frameIndex, totalFrames,
+        renderer.drawSpriteFrame(spriteSheetName, frameIndex, totalFrames,
                 baseX, turretY,
                 towerSize, towerSize,
                 1.0f, 1.0f, 1.0f, 0.7f);
 
-        libGdxRenderer.end();
+        renderer.end();
     }
 
     /**
@@ -377,18 +370,17 @@ public class GameSceneRenderer {
      * 在塔按钮上绘制塔精灵图
      */
     public void drawTowerButtonSprites(GameRenderer renderer) {
-        LibGdxRenderer libGdxRenderer = (LibGdxRenderer) renderer;
         UiRenderer.TowerButtonInfo[] buttons = uiRenderer.getTowerButtons();
         if (buttons == null) return;
 
-        libGdxRenderer.begin();
+        renderer.begin();
 
         for (UiRenderer.TowerButtonInfo button : buttons) {
             if (button == null) continue;
             String sheetName = SpriteNames.tower(button.towerType);
             int totalFrames = TowerData.getTotalFrames(button.towerType);
-            int fw = libGdxRenderer.getSpriteFrameWidth(sheetName, totalFrames);
-            int fh = libGdxRenderer.getSpriteFrameHeight(sheetName, totalFrames);
+            int fw = renderer.getSpriteFrameWidth(sheetName, totalFrames);
+            int fh = renderer.getSpriteFrameHeight(sheetName, totalFrames);
             if (fw <= 0 || fh <= 0) { fw = 32; fh = 32; }
 
             // 将精灵缩放适配按钮尺寸
@@ -402,19 +394,19 @@ public class GameSceneRenderer {
             float drawX = button.screenX + (button.width - drawW) / 2f;
             float drawY = button.screenY + (button.height - drawH) / 2f - 6;
 
-            libGdxRenderer.drawSpriteFrame(sheetName, 0, totalFrames,
+            renderer.drawSpriteFrame(sheetName, 0, totalFrames,
                     drawX, drawY, drawW, drawH);
 
             // 绘制转头 — 居中略上移，使炮管在底座上方可见
             if (totalFrames > 1) {
                 int towerH = TowerData.towerHeight(button.towerType);
                 float turretY = drawY - (towerH * scale) * 0.5f;
-                libGdxRenderer.drawSpriteFrame(sheetName, 1, totalFrames,
+                renderer.drawSpriteFrame(sheetName, 1, totalFrames,
                         drawX, turretY, drawW, drawH);
             }
         }
 
-        libGdxRenderer.end();
+        renderer.end();
     }
 
     /**

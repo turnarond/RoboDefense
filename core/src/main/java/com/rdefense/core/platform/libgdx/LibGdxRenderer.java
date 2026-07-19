@@ -191,6 +191,7 @@ public class LibGdxRenderer implements GameRenderer {
      * @param totalFrames 总帧数
      * @return 帧宽度，如果无法获取返回 0
      */
+    @Override
     public int getSpriteFrameWidth(String imageName, int totalFrames) {
         TextureRegion[] frames = findSpriteSheetFrames(imageName, totalFrames);
         if (frames != null && frames.length > 0) {
@@ -205,6 +206,7 @@ public class LibGdxRenderer implements GameRenderer {
      * @param totalFrames 总帧数
      * @return 帧高度，如果无法获取返回 0
      */
+    @Override
     public int getSpriteFrameHeight(String imageName, int totalFrames) {
         TextureRegion[] frames = findSpriteSheetFrames(imageName, totalFrames);
         if (frames != null && frames.length > 0) {

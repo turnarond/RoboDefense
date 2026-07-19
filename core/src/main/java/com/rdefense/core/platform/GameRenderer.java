@@ -106,6 +106,26 @@ public interface GameRenderer {
     void applyCameraTransform(float xBase, float yBase, float scale);
 
     /**
+     * 获取精灵图帧的宽度
+     * @param imageName 精灵图名称
+     * @param totalFrames 总帧数
+     * @return 帧宽度，如果无法获取返回 0
+     */
+    default int getSpriteFrameWidth(String imageName, int totalFrames) {
+        return 0;
+    }
+
+    /**
+     * 获取精灵图帧的高度
+     * @param imageName 精灵图名称
+     * @param totalFrames 总帧数
+     * @return 帧高度，如果无法获取返回 0
+     */
+    default int getSpriteFrameHeight(String imageName, int totalFrames) {
+        return 0;
+    }
+
+    /**
      * 屏幕坐标转世界坐标
      */
     float[] screenToWorld(float screenX, float screenY);
