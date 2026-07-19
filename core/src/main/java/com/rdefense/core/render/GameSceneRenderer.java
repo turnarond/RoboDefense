@@ -434,7 +434,8 @@ public class GameSceneRenderer {
             default:
                 stateStr = "";       sr = sg = sb = 0.5f; break;
         }
-        renderer.drawText(stateStr, xStart + 400, yTop, sr, sg, sb, 0.95f);
+
+        // 状态文字移到脚注中
 
         // FPS/缩放（调试层，可选显示）
         if (options != null && options.optionValue(OptionsData.SHOW_DRAW_PERFORMANCE)) {
@@ -445,9 +446,10 @@ public class GameSceneRenderer {
                     0.4f, 0.45f, 0.55f, 0.7f);
         }
 
-        // === 脚注 ===
-        renderer.drawText("[1]机枪  [2]冰塔  [3]火箭  [空格]暂停  [F]快进  [Esc]退出",
+        // === 脚注：快捷键 + 状态 ===
+        renderer.drawText("[1]机枪 [2]冰塔 [3]火箭  [空格]暂停 [F]快进 [Esc]退出",
                 10, 16, 0.5f, 0.52f, 0.56f, 0.7f);
+        renderer.drawText(stateStr, screenW - 52, 16, sr, sg, sb, 0.85f);
         renderer.end();
     }
 

@@ -537,7 +537,10 @@ public class UiRenderer {
 
         float alpha = Math.min(1.0f, (float) placementFailureTimer / 30.0f);
         renderer.begin();
-        renderer.drawText(placementFailureMsg, 10, renderer.getScreenHeight() - 80, 1.0f, 0.3f, 0.3f, alpha);
+        // 提示显示在商店左侧，玩家视线在右下方时可立即看到
+        int msgX = renderer.getScreenWidth() - 260;
+        int msgY = renderer.getScreenHeight() / 2;
+        renderer.drawText(placementFailureMsg, msgX, msgY, 1.0f, 0.35f, 0.2f, alpha);
         renderer.end();
     }
 
