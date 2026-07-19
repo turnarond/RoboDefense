@@ -113,9 +113,7 @@ public class GameSceneRenderer {
         // 按钮底座精灵（缩到30px嵌在价格和塔名之间）
         drawTowerButtonIcons();
 
-        // UI 组件（各自管理 begin/end，不可包在外部 batch 内）
-        uiRenderer.renderControlButtons(gameState.getRunState());
-        if (options != null) uiRenderer.renderScaleSlider(options, camera);
+        // UI 组件
     }
 
     // ============================================================
@@ -447,9 +445,9 @@ public class GameSceneRenderer {
                     0.4f, 0.45f, 0.55f, 0.7f);
         }
 
-        // === 脚注：极细灰字，无背景条 ===
+        // === 脚注 ===
         renderer.drawText("[1]机枪  [2]冰塔  [3]火箭  [空格]暂停  [F]快进  [Esc]退出",
-                10, 10, 0.35f, 0.38f, 0.42f, 0.55f);
+                10, 16, 0.5f, 0.52f, 0.56f, 0.7f);
         renderer.end();
     }
 
