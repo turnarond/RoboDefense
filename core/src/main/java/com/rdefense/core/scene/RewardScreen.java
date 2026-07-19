@@ -10,7 +10,7 @@ import com.rdefense.core.render.RewardRenderer;
 public class RewardScreen extends GameScreen implements InputProcessor {
 
     private static final int BUTTON_WIDTH = 100;
-    private static final int BUTTON_HEIGHT = 36;
+    private static final int BUTTON_HEIGHT = 34;
 
     private RewardRenderer rewardRenderer;
     private int scrollOffset = 0;
@@ -105,10 +105,10 @@ public class RewardScreen extends GameScreen implements InputProcessor {
 
         // 列表表头
         renderer.drawRect(12, screenHeight - 52, screenWidth - 24, 1, 0.12f, 0.2f, 0.35f, 0.5f);
-        renderer.drawText("名称", 16, screenHeight - 62, 0.5f, 0.55f, 0.65f, 0.9f);
-        renderer.drawText("等级", 200, screenHeight - 62, 0.5f, 0.55f, 0.65f, 0.9f);
-        renderer.drawText("效果", 320, screenHeight - 62, 0.5f, 0.55f, 0.65f, 0.9f);
-        renderer.drawText("操作", screenWidth - 100, screenHeight - 62, 0.5f, 0.55f, 0.65f, 0.9f);
+        renderer.drawText("名称", 40, screenHeight - 62, 0.5f, 0.55f, 0.65f, 0.9f);
+        renderer.drawText("等级", 180, screenHeight - 62, 0.5f, 0.55f, 0.65f, 0.9f);
+        renderer.drawText("效果", 280, screenHeight - 62, 0.5f, 0.55f, 0.65f, 0.9f);
+        renderer.drawText("操作", 390, screenHeight - 62, 0.5f, 0.55f, 0.65f, 0.9f);
 
         // 渲染奖励列表
         rewardRenderer.drawRewardGrid(renderer, scrollOffset, points);
@@ -116,7 +116,8 @@ public class RewardScreen extends GameScreen implements InputProcessor {
         // 返回按钮
         int backX = screenWidth - BUTTON_WIDTH - 16;
         int backY = 16;
-        renderer.drawRect(backX, backY, BUTTON_WIDTH, BUTTON_HEIGHT, 0.2f, 0.25f, 0.45f, 0.95f);
+        renderer.drawRect(backX, backY, BUTTON_WIDTH, BUTTON_HEIGHT, 0.08f, 0.12f, 0.25f, 0.95f);
+        renderer.drawRect(backX, backY, BUTTON_WIDTH, BUTTON_HEIGHT, 0.2f, 0.3f, 0.5f, 0.95f);
         renderer.drawText("返回", backX + 28, backY + BUTTON_HEIGHT - 10, 0.85f, 0.9f, 0.9f, 1.0f);
 
         renderer.end();
