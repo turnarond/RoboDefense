@@ -21,12 +21,13 @@ import com.rdefense.core.render.GameLoop;
 import com.rdefense.core.render.SpriteNames;
 import com.rdefense.core.render.GameSceneRenderer;
 import com.rdefense.core.render.UiRenderer;
+import com.rdefense.core.input.GameInputController;
 import com.rdefense.core.input.GameInputHandlerImpl;
 
 /**
  * 游戏主场景 — 运行游戏的核心场景
  */
-public class GamePlayScreen extends GameScreen {
+public class GamePlayScreen extends GameScreen implements GameInputController.GameInputCallbacks {
 
     private GameState gameState;
     private UiRenderer uiRenderer;
@@ -45,6 +46,7 @@ public class GamePlayScreen extends GameScreen {
     private int loadSlotId = -1;            // 从指定槽位加载（>=0 有效）
     private int lastRunState = -1; // 上一帧 run_state，用于检测胜负转换
     private boolean upgradeDialogWasVisible; // 升级对话框上一帧可见状态（用于自动暂停）
+    private GameInputController inputController = new GameInputController();
 
     public GamePlayScreen(RoboDefenseGame game) {
         super(game);
@@ -167,31 +169,8 @@ public class GamePlayScreen extends GameScreen {
     protected void update(float delta) {
         if (!initialized || gameState == null) return;
         try {
-            // ESC 暂停并显示菜单
-            if (com.badlogic.gdx.Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.ESCAPE)) {
-                int rs = gameState.getRunState();
-                if (showPauseMenu) {
-                    showPauseMenu = false;
-                    gameState.togglePause();
-                } else if (rs == GameState.GAME_PAUSED) {
-                    gameState.togglePause();
-                } else if (rs == GameState.GAME_RUNNING || rs == GameState.GAME_FAST_FWD) {
-                    gameState.togglePause();
-                    showPauseMenu = true;
-                }
-            }
-            // 空格切换快进
-            if (com.badlogic.gdx.Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.SPACE)) {
-                gameState.toggleFastFwd();
-            }
-            // 调试按键：按 F9 强制触发 HD 回退，便于观察短消息
-            if (com.badlogic.gdx.Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.F9)) {
-                try {
-                    GameRenderer gr = game.getServices().getRenderer();
-                    if (gr instanceof com.rdefense.core.platform.libgdx.LibGdxRenderer) {
-                        ((com.rdefense.core.platform.libgdx.LibGdxRenderer) gr).forceHdFallback("F9 key");
-                    }
-                } catch (Throwable ignored) { }
+            if (inputController.handleKeys(gameState, showPauseMenu, this)) {
+                showPauseMenu = true;
             }
             int runState = gameState.getRunState();
 
@@ -523,6 +502,52 @@ public class GamePlayScreen extends GameScreen {
                 }
             }
         }
+    }
+
+    // === GameInputController.GameInputCallbacks 实现 ===
+
+    @Override
+    public void onTogglePause() {
+        gameState.togglePause();
+    }
+
+    @Override
+    public void onToggleFastFwd() {
+        gameState.toggleFastFwd();
+    }
+
+    @Override
+    public void onPauseMenuContinue() {
+        showPauseMenu = false;
+        gameState.togglePause();
+    }
+
+    @Override
+    public void onPauseMenuSaveAndQuit() {
+        try {
+            game.getGameSaveManager().quickSave(gameState);
+        } catch (Exception e) {
+            Gdx.app.error("GamePlayScreen", "快速保存失败", e);
+        }
+        gameState.endGame(GameState.GAME_NOT_STARTED);
+        showPauseMenu = false;
+        switchScreen(new MainMenuScreen(game));
+    }
+
+    @Override
+    public void onPauseMenuQuitWithoutSave() {
+        showPauseMenu = false;
+        switchScreen(new MainMenuScreen(game));
+    }
+
+    @Override
+    public void onForceHdFallback() {
+        try {
+            GameRenderer gr = game.getServices().getRenderer();
+            if (gr instanceof LibGdxRenderer) {
+                ((LibGdxRenderer) gr).forceHdFallback("F9 key");
+            }
+        } catch (Throwable ignored) { }
     }
 
 }
