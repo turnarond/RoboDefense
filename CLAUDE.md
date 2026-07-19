@@ -35,6 +35,9 @@ java -jar desktop/build/libs/desktop.jar
 | 架构设计 | `docs/03-架构设计.md` | 系统架构、模块设计、数据流、关键算法 |
 | 详细方案 | `docs/04-详细方案设计.md` | 子系统详细设计、性能优化、屏幕适配 |
 | 接口设计 | `docs/05-接口设计.md` | 平台服务接口、存档接口、SQLite 表结构 |
+| APK 差距分析 | `docs/06-APK差距分析报告.md` | 60 类全覆盖差距分析（原版 vs 桌面版） |
+| UI 设计交互评审 | `docs/07-UI设计交互评审报告.md` | 设计一致性与交互可用性评审 |
+| UI 渲染架构评审 | `docs/08-UI渲染架构评审报告.md` | 渲染性能与代码架构评审 |
 
 ## 技术栈与约束
 
@@ -67,12 +70,16 @@ java -jar desktop/build/libs/desktop.jar
 │  com.rdefense.core                           │
 │  ├── RoboDefenseGame.java   主游戏类（入口）   │
 │  ├── game/    游戏逻辑与数据结构               │
+│  │   ├── Starfield.java      星空粒子背景      │
 │  ├── render/  渲染系统与游戏循环               │
+│  │   ├── GameSceneRenderer.java  游戏场景渲染   │
+│  │   ├── AchievementRenderer.java  成就弹窗     │
 │  ├── scene/   场景管理（Screen 子类）           │
 │  ├── platform/  平台抽象接口                   │
 │  ├── save/    存档系统（SQLite）               │
 │  ├── audio/   音效管理                         │
 │  ├── input/   输入处理                         │
+│  │   ├── GameInputController.java  键盘控制     │
 │  └── config/  配置数据                         │
 └──────────────────────────────────────────────┘
 ```
@@ -134,7 +141,9 @@ java -jar desktop/build/libs/desktop.jar
  └─ 不保存退出 → 主菜单
 ```
 
-### GamePlayScreen 三种启动模式
+### GamePlayScreen 三种启动模式（重构后）
+
+`GamePlayScreen` 经重构后缩减至 ~550 行协调角色。渲染批处理移至 `GameSceneRenderer`，按键处理移至 `GameInputController`。绘制流程统一为相机变换→世界层(begin/end)→屏幕层(begin/end)→条件覆盖层。
 
 | 模式 | 触发方式 | 行为 |
 |------|---------|------|
@@ -244,9 +253,9 @@ gps.configureLevel(map, diff); // 新游戏（关卡选择）
 - `GameState.endGame()` → `gameWonAchievements()`
 - `GameTower.handleMine()` — 地雷链成就
 
-## APK 保真修复记录（2026-07-17〜18）
+## APK 保真修复记录（2026-07-17〜19）
 
-基于 `docs/06-APK差距分析报告.md` 完成四轮修复（计划①〜④），覆盖全部 6 个 P0 与约 34 条 P1。
+基于 `docs/06-APK差距分析报告.md` 完成四轮修复（计划①〜④）+ UI 评审重构（计划 1A/1B/2A/2B/2C/2D），覆盖全部 6 个 P0 与约 40 条 P1。
 
 ### 已修复的关键偏差
 - 恢复 `saveScore` 四奖金结算（20% 胜利奖金 + 1% 生命奖金 + 20% 完美奖金 + 金钱×难度×2）
@@ -268,6 +277,18 @@ gps.configureLevel(map, diff); // 新游戏（关卡选择）
 
 ### 计划文件
 - `docs/06-APK差距分析报告.md` — 60 类全覆盖差距分析
+- `docs/07-UI设计交互评审报告.md` — 设计一致性与交互可用性评审
+- `docs/08-UI渲染架构评审报告.md` — 渲染性能与代码架构评审
 - `docs/superpowers/plans/2026-07-17-apk-parity-fix-1-scoring-numeric.md` — 计划① 结算/数值/健壮性
 - `docs/superpowers/plans/2026-07-17-apk-parity-fix-2-achievements.md` — 计划② 成就/存档/事件/HUD
 - `docs/superpowers/plans/2026-07-17-apk-parity-fix-3-ui.md` — 计划③ 混合器/UI/星空
+- `docs/superpowers/plans/2026-07-17-apk-parity-fix-4-cleanup.md` — 计划④ 微调/死代码
+- `docs/superpowers/plans/2026-07-19-ui-*.md` — UI 评审与重构系列计划
+
+### 重构架构变更
+- `GameSceneRenderer`（446行）：游戏场景渲染层，接管 GamePlayScreen 全部 draw* 方法
+- `GameInputController`（67行）：键盘输入处理层，ESCAPE/SPACE/F9 按键逻辑
+- `GamePlayScreen`：931→553行（-41%），纯协调角色
+- `Starfield`（47行）：宇宙/公路关卡星空粒子背景
+- begin/end 批次数：10-19→2 对/帧
+- 标题栏/返回按钮：7+6 Screen 统一到 GameScreen 基类
