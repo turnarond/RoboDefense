@@ -111,9 +111,11 @@ public class GameSceneRenderer {
         // HUD（自持 batch)
         drawHud(gameState, stateIndex, currentFps, batteryLevel);
 
-        // 塔按钮与精灵（自持 batch，含脏标记）
-        drawTowerButtons(money, stateIndex);
+        // 塔精灵（先绘制，避免遮盖名称/价格文字）
         drawTowerButtonSprites();
+
+        // 塔按钮面板与文字（后绘制，叠在精灵之上）
+        drawTowerButtons(money, stateIndex);
 
         // UI 组件（各自管理 begin/end，不可包在外部 batch 内）
         uiRenderer.renderControlButtons(gameState.getRunState());
