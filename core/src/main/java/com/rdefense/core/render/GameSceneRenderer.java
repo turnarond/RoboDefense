@@ -381,13 +381,26 @@ public class GameSceneRenderer {
         renderer.drawRect(0, screenH - 32, screenW, 32, 0.03f, 0.04f, 0.1f, 0.88f);
         renderer.drawRect(0, screenH - 1, screenW, 1, 0.12f, 0.2f, 0.3f, 0.5f);
 
-        // 关卡
-        renderer.drawText("L:" + gameState.getLevelData().getLevelNum(), xStart, yTop,
-                0.5f, 0.55f, 0.65f, 1.0f);
+        // 地图 + 波次
+        com.rdefense.core.game.LevelData ld = gameState.getLevelData();
+        String[] mapShort = {"草地","遗迹","工厂","庭院","混合","公路","天空"};
+        String mapName = ld.getLevelType() >= 0 && ld.getLevelType() < mapShort.length
+                ? mapShort[ld.getLevelType()] : "??";
+        renderer.drawText(mapName + " L:" + ld.getLevelNum(),
+                xStart, yTop, 0.5f, 0.55f, 0.65f, 1.0f);
+        // 难度（括号内，紧接地名后）
+        renderer.drawText("难度" + gameState.getDifficultyLevel(), xStart + 130, yTop,
+                0.45f, 0.5f, 0.58f, 0.85f);
 
         // 金钱（指挥金）
-        renderer.drawText("$" + GameScreen.formatWithCommas(displayMoney), xStart + 60, yTop,
+        renderer.drawText("$" + GameScreen.formatWithCommas(displayMoney), xStart + 200, yTop,
                 0.83f, 0.67f, 0.16f, 1.0f);
+
+        // 击杀奖励
+        int bonus = gameState.getEnemyKillBonus();
+        if (bonus > 0) {
+            renderer.drawText("击杀+" + bonus, xStart + 350, yTop, 0.55f, 0.5f, 0.7f, 0.85f);
+        }
 
         // 生命值 + 血量条（HP≤3 时脉冲呼吸）
         int hp = displayHealth;
@@ -400,10 +413,13 @@ public class GameSceneRenderer {
         } else {
             hpAlpha = 1.0f;
         }
-        renderer.drawText("HP " + hp, xStart + 200, yTop,
+
+        // 生命值文本（距左 440）
+        float hpX = xStart + 440;
+        renderer.drawText("HP " + hp, hpX, yTop,
                 0.6f * hpAlpha, 0.9f * hpAlpha, 0.25f * hpAlpha, 1.0f);
-        renderer.drawRect(xStart + 238, screenH - 15, 38, 3, 0.3f, 0.08f, 0.08f, 0.5f);
-        renderer.drawRect(xStart + 238, screenH - 15, 38 * hpRatio, 3,
+        renderer.drawRect(hpX + 34, screenH - 15, 38, 3, 0.3f, 0.08f, 0.08f, 0.5f);
+        renderer.drawRect(hpX + 34, screenH - 15, 38 * hpRatio, 3,
                 0.1f * hpAlpha, 0.85f * hpAlpha, 0.22f * hpAlpha, 0.9f);
 
         // 分数
@@ -417,7 +433,7 @@ public class GameSceneRenderer {
         String scoreText = (score >= 1000) ? "PTS:" + GameScreen.formatWithCommas(score)
                                            : "PTS:" + score;
         if (pendingScore > 0) scoreText += " +" + pendingScore;
-        renderer.drawText(scoreText, xStart + 300, yTop, 0.55f, 0.58f, 0.65f, 1.0f);
+        renderer.drawText(scoreText, hpX + 90, yTop, 0.55f, 0.58f, 0.65f, 1.0f);
 
         // 状态
         String stateStr;
