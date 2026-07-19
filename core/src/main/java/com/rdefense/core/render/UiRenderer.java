@@ -136,8 +136,8 @@ public class UiRenderer {
         float dialogX = upgradeDialog.screenX - upgradeDialog.width / 2;
         float dialogY = upgradeDialog.screenY - upgradeDialog.height / 2;
 
-        // 半透明遮罩
-        renderer.drawRect(0, 0, renderer.getScreenWidth(), renderer.getScreenHeight(), 0f, 0f, 0f, 0.35f);
+        // 轻遮罩——游戏仍然可见
+        renderer.drawRect(0, 0, renderer.getScreenWidth(), renderer.getScreenHeight(), 0f, 0f, 0f, 0.22f);
 
         // 数据卡片面板
         renderer.drawRect(dialogX, dialogY, upgradeDialog.width, upgradeDialog.height,

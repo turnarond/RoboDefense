@@ -305,41 +305,35 @@ public class GamePlayScreen extends GameScreen implements GameInputController.Ga
         float sw = renderer.getScreenWidth();
         float sh = renderer.getScreenHeight();
 
-        // 半透明遮罩
-        renderer.drawRect(0, 0, sw, sh, 0.03f, 0.04f, 0.1f, 0.72f);
+        // 轻遮罩——游戏仍然可见
+        renderer.drawRect(0, 0, sw, sh, 0.02f, 0.03f, 0.06f, 0.45f);
 
-        // 居中面板
-        float pw = 180, ph = 200;
+        // 玻璃面板（半透明，游戏透出）
+        float pw = 170, ph = 185;
         float px = sw / 2 - pw / 2;
         float py = sh / 2 - ph / 2;
-        renderer.drawRect(px, py, pw, ph, 0.08f, 0.11f, 0.2f, 0.94f);
-        renderer.drawRect(px, py + ph - 1, pw, 2, 0.2f, 0.36f, 0.55f, 0.8f);
+        renderer.drawRect(px, py, pw, ph, 0.06f, 0.08f, 0.16f, 0.85f);
+        renderer.drawRect(px, py + ph - 1, pw, 2, 0.83f, 0.67f, 0.16f, 0.5f);
 
         // 标题
         float cx = sw / 2;
-        renderer.drawText("游戏暂停", cx - 30, py + ph - 24, 0.7f, 0.82f, 0.95f, 1.0f);
+        renderer.drawText("暂停", cx - 14, py + ph - 22, 0.75f, 0.82f, 0.92f, 1.0f);
 
-        // 按钮（从下到上排列，无重叠）
-        float bw = 140, bh = 36, gap = 12;
+        // 三个按钮
+        float bw = 130, bh = 34, gap = 8;
         float bx = cx - bw / 2;
+        float by3 = py + 14;
+        float by2 = by3 + bh + gap;
+        float by1 = by2 + bh + gap;
 
-        float by3 = py + 16;                        // 不保存退出（底）
-        float by2 = by3 + bh + gap;                 // 保存并退出（中）
-        float by1 = by2 + bh + gap;                 // 继续游戏（顶）
-
-        // 继续游戏（绿）
-        renderer.drawRect(bx, by1, bw, bh, 0.08f, 0.28f, 0.12f, 0.9f);
-        renderer.drawRect(bx, by1 + bh - 1, bw, 1, 0.15f, 0.45f, 0.2f, 0.7f);
-        renderer.drawText("继续游戏", bx + bw/2 - 22, by1 + 14, 0.75f, 0.92f, 0.8f, 1.0f);
-
-        // 保存并退出（蓝）
-        renderer.drawRect(bx, by2, bw, bh, 0.06f, 0.12f, 0.3f, 0.9f);
-        renderer.drawRect(bx, by2 + bh - 1, bw, 1, 0.12f, 0.25f, 0.5f, 0.7f);
-        renderer.drawText("保存并退出", bx + bw/2 - 28, by2 + 14, 0.75f, 0.85f, 0.95f, 1.0f);
-
-        // 不保存退出（红）
-        renderer.drawRect(bx, by3, bw, bh, 0.25f, 0.08f, 0.1f, 0.85f);
-        renderer.drawRect(bx, by3 + bh - 1, bw, 1, 0.45f, 0.12f, 0.15f, 0.7f);
+        // 继续游戏
+        renderer.drawRect(bx, by1, bw, bh, 0.08f, 0.24f, 0.12f, 0.8f);
+        renderer.drawText("继续游戏", bx + bw/2 - 22, by1 + 14, 0.78f, 0.9f, 0.8f, 1.0f);
+        // 保存并退出
+        renderer.drawRect(bx, by2, bw, bh, 0.06f, 0.12f, 0.25f, 0.8f);
+        renderer.drawText("保存并退出", bx + bw/2 - 28, by2 + 14, 0.75f, 0.85f, 0.92f, 1.0f);
+        // 不保存退出
+        renderer.drawRect(bx, by3, bw, bh, 0.3f, 0.1f, 0.1f, 0.78f);
         renderer.drawText("不保存退出", bx + bw/2 - 28, by3 + 14, 0.9f, 0.65f, 0.65f, 1.0f);
 
         renderer.end();
