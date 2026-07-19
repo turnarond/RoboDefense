@@ -513,17 +513,19 @@ public class GameSceneRenderer {
             int drawW = (int) (fw * scale);
             int drawH = (int) (fh * scale);
 
-            // 底座居中于按钮内（上下留白均等）
+            // 底座居中偏上（下方留白给价格文字）
             float drawX = button.screenX + (button.width - drawW) / 2f;
-            float drawY = button.screenY + (button.height - drawH) / 2f;
+            float drawY = button.screenY + (button.height - drawH) / 2f + 8;
 
             renderer.drawSpriteFrame(sheetName, 0, totalFrames,
                     drawX, drawY, drawW, drawH);
 
-            // 绘制转头 — 与底座同位置
+            // 绘制转头 — 底座上方（参考 drawTowers 的 turretY = wy + towerHeight）
             if (totalFrames > 1) {
+                int towerH = TowerData.towerHeight(button.towerType);
+                float turretY = drawY + towerH * scale;
                 renderer.drawSpriteFrame(sheetName, 1, totalFrames,
-                        drawX, drawY, drawW, drawH);
+                        drawX, turretY, drawW, drawH);
             }
         }
         renderer.end();
