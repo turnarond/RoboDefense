@@ -15,7 +15,7 @@ import java.util.List;
 public class AchievementScreen extends GameScreen implements InputProcessor {
 
     private static final int ROW_H = 44;
-    private static final int TAB_W = 58, TAB_H = 30, TAB_GAP = 5;
+    private static final int TAB_W = 58, TAB_H = 30, TAB_GAP = 10;
 
     private AchievementData.AchievementCategory selectedCategory = null;
     private int scrollOffset = 0;
@@ -206,10 +206,10 @@ public class AchievementScreen extends GameScreen implements InputProcessor {
         // 滚动条
         if (filtered.size() > visibleRows) {
             int sx = sw - 16;
-            r.drawRect(sx - 4, 56, 8, listH, 0.12f, 0.12f, 0.18f, 0.5f);
+            r.drawRect(sx - 7, 56, 14, listH, 0.12f, 0.12f, 0.18f, 0.5f);
             int handleH = Math.max(24, listH * visibleRows / filtered.size());
             int handleY = 56 + (listH - handleH) * scrollOffset / (filtered.size() - visibleRows);
-            r.drawRect(sx - 4, handleY, 8, handleH, 0.35f, 0.4f, 0.55f, 0.85f);
+            r.drawRect(sx - 7, handleY, 14, handleH, 0.35f, 0.4f, 0.55f, 0.85f);
         }
 
         // 返回
