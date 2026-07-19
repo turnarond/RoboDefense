@@ -45,7 +45,7 @@ public class GamePlayScreen extends GameScreen implements GameInputController.Ga
     private boolean resumeMode = false;     // 从快速存档恢复
     private int loadSlotId = -1;            // 从指定槽位加载（>=0 有效）
     private int lastRunState = -1; // 上一帧 run_state，用于检测胜负转换
-    private boolean upgradeDialogWasVisible; // 升级对话框上一帧可见状态（用于自动暂停）
+
     private GameInputController inputController = new GameInputController();
 
     public GamePlayScreen(RoboDefenseGame game) {
@@ -248,19 +248,11 @@ public class GamePlayScreen extends GameScreen implements GameInputController.Ga
         // 世界坐标层（1 次 begin/end，包含背景/塔/敌人/子弹/事件/预览）
         sceneRenderer.renderWorldLayer(gameState, stateIndex);
 
-        // 升级对话框（条件绘制，自持 batch）
-        boolean dialogVisible = false;
-        if (runState == GameState.GAME_RUNNING || runState == GameState.GAME_FAST_FWD) {
+        // 升级对话框（条件绘制，自持 batch——不自动暂停，玩家按 ESC 手动暂停）
+        if (runState == GameState.GAME_RUNNING || runState == GameState.GAME_FAST_FWD
+                || runState == GameState.GAME_PAUSED) {
             uiRenderer.renderUpgradeDialog(gameState.getMoney(), stateIndex);
-            dialogVisible = uiRenderer.isUpgradeDialogVisible();
         }
-        if (dialogVisible && !upgradeDialogWasVisible) {
-            int rs = gameState.getRunState();
-            if (rs == GameState.GAME_RUNNING || rs == GameState.GAME_FAST_FWD) {
-                gameState.togglePause();
-            }
-        }
-        upgradeDialogWasVisible = dialogVisible;
 
         // 8.1 绘制放置失败提示
         uiRenderer.renderPlacementFailure();

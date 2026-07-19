@@ -271,8 +271,9 @@ public class UiRenderer {
                                   com.rdefense.core.render.CameraManager camera) {
         if (options == null || !options.optionValue(6)) return;
         int screenW = renderer.getScreenWidth();
+        int screenH = renderer.getScreenHeight();
         int barX = screenW / 2 - 75;
-        int barY = 6;
+        int barY = screenH - 28; // HUD 标题栏上方，不覆盖控制按钮文字
         int barW = 150;
         int barH = 14;
         renderer.begin();
