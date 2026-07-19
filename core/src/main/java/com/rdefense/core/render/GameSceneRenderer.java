@@ -491,7 +491,7 @@ public class GameSceneRenderer {
 
 
     // ============================================================
-    /** 按钮底座小图标：仅画帧0，缩到30px嵌在价格(Y+8)和塔名(Y+52)之间 */
+    /** 按钮图标：底座+转头，缩放到填充按钮（留4px边距） */
     private void drawTowerButtonIcons() {
         UiRenderer.TowerButtonInfo[] buttons = uiRenderer.getTowerButtons();
         if (buttons == null) return;
@@ -504,11 +504,19 @@ public class GameSceneRenderer {
             int fw = renderer.getSpriteFrameWidth(sheet, totalFrames);
             int fh = renderer.getSpriteFrameHeight(sheet, totalFrames);
             if (fw <= 0 || fh <= 0) { fw = 32; fh = 32; }
-            float s = 30f / fh;
+            // 缩放到填充按钮（留4px边距）
+            float s = Math.min((btn.width - 8) / (float)fw, (btn.height - 8) / (float)fh);
             int iw = (int)(fw * s), ih = (int)(fh * s);
             float ix = btn.screenX + (btn.width - iw) / 2f;
-            float iy = btn.screenY + 18;
+            float iy = btn.screenY + (btn.height - ih) / 2f;
+            // 底座
             renderer.drawSpriteFrame(sheet, 0, totalFrames, ix, iy, iw, ih);
+            // 转头（底座上方，参考 drawTowers）
+            if (totalFrames > 1) {
+                int towerH = TowerData.towerHeight(btn.towerType);
+                float turretY = iy + towerH * s;
+                renderer.drawSpriteFrame(sheet, 1, totalFrames, ix, turretY, iw, ih);
+            }
         }
         renderer.end();
     }

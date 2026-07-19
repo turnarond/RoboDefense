@@ -98,16 +98,8 @@ public class UiRenderer {
                 renderer.drawRect(screenX, screenY + button.height - 1, button.width, 1, 0.15f, 0.25f, 0.38f, 0.6f);
             }
 
-            // 塔名（底部）
-            renderer.drawText(button.towerName, screenX + button.width / 2 - 12, screenY + button.height - 12,
-                    0.82f, 0.85f, 0.9f, 1.0f);
 
-            // 价格（顶部）
-            String priceText = "$" + button.cost;
-            float pr, pg, pb;
-            if (button.cost > money) { pr = 0.95f; pg = 0.25f; pb = 0.25f; }
-            else { pr = 0.6f; pg = 0.9f; pb = 0.35f; }
-            renderer.drawText(priceText, screenX + button.width / 2 - 10, screenY + 8, pr, pg, pb, 1.0f);
+            // 塔名/价格由 drawTowerButtonIcons 的底座+转头图标替代
         }
 
         renderer.end();
