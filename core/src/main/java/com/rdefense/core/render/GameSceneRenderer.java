@@ -487,46 +487,6 @@ public class GameSceneRenderer {
         uiRenderer.renderTowerButtons(money, stateIndex);
     }
 
-    /**
-     * 在塔按钮上绘制塔精灵图（无 batch 边界）
-     */
-    private void drawTowerButtonSprites() {
-        UiRenderer.TowerButtonInfo[] buttons = uiRenderer.getTowerButtons();
-        if (buttons == null) return;
-        renderer.begin();
-
-        for (UiRenderer.TowerButtonInfo button : buttons) {
-            if (button == null) continue;
-            String sheetName = SpriteNames.tower(button.towerType);
-            int totalFrames = TowerData.getTotalFrames(button.towerType);
-            int fw = renderer.getSpriteFrameWidth(sheetName, totalFrames);
-            int fh = renderer.getSpriteFrameHeight(sheetName, totalFrames);
-            if (fw <= 0 || fh <= 0) { fw = 32; fh = 32; }
-
-            // 缩放精灵——留上下各14px给价格/塔名文字
-            float scale = Math.min(
-                    (button.width - 12) / (float) fw,
-                    (button.height - 30) / (float) fh);
-            int drawW = (int) (fw * scale);
-            int drawH = (int) (fh * scale);
-
-            // 底座居中偏上（下方留白给价格文字）
-            float drawX = button.screenX + (button.width - drawW) / 2f;
-            float drawY = button.screenY + (button.height - drawH) / 2f + 8;
-
-            renderer.drawSpriteFrame(sheetName, 0, totalFrames,
-                    drawX, drawY, drawW, drawH);
-
-            // 绘制转头 — 底座上方（参考 drawTowers 的 turretY = wy + towerHeight）
-            if (totalFrames > 1) {
-                int towerH = TowerData.towerHeight(button.towerType);
-                float turretY = drawY + towerH * scale;
-                renderer.drawSpriteFrame(sheetName, 1, totalFrames,
-                        drawX, turretY, drawW, drawH);
-            }
-        }
-        renderer.end();
-    }
 
     // ============================================================
     // 公开辅助方法
