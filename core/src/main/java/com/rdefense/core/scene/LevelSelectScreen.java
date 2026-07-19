@@ -369,11 +369,11 @@ public class LevelSelectScreen extends GameScreen {
         for (int i = 0; i < DIGIT_COUNT; i++) {
             int dx = px + 16 + i * 48;
             int dy = py + 22;
-            r.drawRect(dx + 8, dy - 14, 18, 12, 0.2f, 0.7f, 0.9f, 1f);
-            r.drawText("▲", dx + 10, dy - 13, 0.9f, 0.9f, 0.9f, 1f);
+            r.drawRect(dx + 8, dy - 14, 24, 16, 0.2f, 0.7f, 0.9f, 1f);
+            r.drawText("▲", dx + 10, dy - 6, 0.9f, 0.9f, 0.9f, 1f);
             r.drawText(Integer.toString(digits[i]), dx + 12, dy + 6, 1f, 1f, 0.3f, 1f);
-            r.drawRect(dx + 8, dy + 16, 18, 12, 0.2f, 0.7f, 0.9f, 1f);
-            r.drawText("▼", dx + 10, dy + 16, 0.9f, 0.9f, 0.9f, 1f);
+            r.drawRect(dx + 8, dy + 16, 24, 16, 0.2f, 0.7f, 0.9f, 1f);
+            r.drawText("▼", dx + 10, dy + 24, 0.9f, 0.9f, 0.9f, 1f);
         }
         int rx = px + panelW - 44;
         r.drawRect(rx, py + 46, 36, 24, 0.15f, 0.5f, 0.15f, 1f);

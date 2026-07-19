@@ -147,7 +147,7 @@ public class UiRenderer {
         float dialogY = upgradeDialog.screenY - upgradeDialog.height / 2;
 
         // 半透明遮罩
-        renderer.drawRect(0, 0, renderer.getScreenWidth(), renderer.getScreenHeight(), 0.02f, 0.03f, 0.08f, 0.55f);
+        renderer.drawRect(0, 0, renderer.getScreenWidth(), renderer.getScreenHeight(), 0f, 0f, 0f, 0.35f);
 
         // 主面板
         renderer.drawRect(dialogX, dialogY, upgradeDialog.width, upgradeDialog.height, 0.07f, 0.1f, 0.2f, 0.96f);
