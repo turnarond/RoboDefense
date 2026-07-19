@@ -34,9 +34,6 @@ public class GameSceneRenderer {
     private int displayScore = -1;
     private int displayHealth = -1;
 
-    // 塔按钮脏标记（金钱或激活塔变化时才重绘按钮区域）
-    private int lastMoney = -1;
-    private int lastActiveTowerId = -2;
 
     public GameSceneRenderer(GameRenderer renderer, CameraManager camera, UiRenderer uiRenderer) {
         this.renderer = renderer;
@@ -428,19 +425,19 @@ public class GameSceneRenderer {
         float stateColor_r, stateColor_g, stateColor_b;
         switch (runState) {
             case GameState.GAME_RUNNING:
-                stateStr = "▶ 运行中";
+                stateStr = "运行中";
                 stateColor_r = 0.3f; stateColor_g = 1.0f; stateColor_b = 0.3f;
                 break;
             case GameState.GAME_PAUSED:
-                stateStr = "⏸ 暂停";
+                stateStr = "暂停";
                 stateColor_r = 1.0f; stateColor_g = 0.8f; stateColor_b = 0.2f;
                 break;
             case GameState.GAME_FAST_FWD:
-                stateStr = "⏩ 快进";
+                stateStr = "快进中";
                 stateColor_r = 1.0f; stateColor_g = 0.5f; stateColor_b = 0.2f;
                 break;
             case GameState.GAME_NOT_STARTED:
-                stateStr = "⏹ 准备";
+                stateStr = "准备";
                 stateColor_r = 0.6f; stateColor_g = 0.6f; stateColor_b = 0.6f;
                 break;
             default:
@@ -476,11 +473,6 @@ public class GameSceneRenderer {
      * 绘制塔按钮（初始化 + 按钮渲染，不含控制按钮/缩放滑块/精灵预览）
      */
     private void drawTowerButtons(int money, int stateIndex) {
-        // 脏标记：金钱和激活塔未变化时跳过重绘（按钮绘制是 renderScreenLayer 中最耗时的批次操作）
-        if (money == lastMoney && uiRenderer.getActiveTowerId() == lastActiveTowerId) return;
-        lastMoney = money;
-        lastActiveTowerId = uiRenderer.getActiveTowerId();
-
         // 初始化塔按钮（只初始化一次）
         if (uiRenderer.getTowerButtons() == null) {
             UiRenderer.TowerButtonInfo[] buttons = new UiRenderer.TowerButtonInfo[3];
