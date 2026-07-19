@@ -108,8 +108,10 @@ public class GameSceneRenderer {
         // HUD（自持 batch)
         drawHud(gameState, currentFps, batteryLevel);
 
-        // 塔按钮（面板+名称+价格，不绘制精灵——地图上已展示实际塔外观）
+        // 塔按钮面板+文字
         drawTowerButtons(money, stateIndex);
+        // 按钮底座精灵（缩到30px嵌在价格和塔名之间）
+        drawTowerButtonIcons();
 
         // UI 组件（各自管理 begin/end，不可包在外部 batch 内）
         uiRenderer.renderControlButtons(gameState.getRunState());
@@ -489,6 +491,28 @@ public class GameSceneRenderer {
 
 
     // ============================================================
+    /** 按钮底座小图标：仅画帧0，缩到30px嵌在价格(Y+8)和塔名(Y+52)之间 */
+    private void drawTowerButtonIcons() {
+        UiRenderer.TowerButtonInfo[] buttons = uiRenderer.getTowerButtons();
+        if (buttons == null) return;
+        renderer.begin();
+        for (UiRenderer.TowerButtonInfo btn : buttons) {
+            if (btn == null) continue;
+            String sheet = SpriteNames.tower(btn.towerType);
+            int totalFrames = TowerData.getTotalFrames(btn.towerType);
+            if (totalFrames < 1) continue;
+            int fw = renderer.getSpriteFrameWidth(sheet, totalFrames);
+            int fh = renderer.getSpriteFrameHeight(sheet, totalFrames);
+            if (fw <= 0 || fh <= 0) { fw = 32; fh = 32; }
+            float s = 30f / fh;
+            int iw = (int)(fw * s), ih = (int)(fh * s);
+            float ix = btn.screenX + (btn.width - iw) / 2f;
+            float iy = btn.screenY + 18;
+            renderer.drawSpriteFrame(sheet, 0, totalFrames, ix, iy, iw, ih);
+        }
+        renderer.end();
+    }
+
     // 公开辅助方法
     // ============================================================
 
