@@ -107,13 +107,17 @@ public class GameSceneRenderer {
     public void renderScreenLayer(GameState gameState, int stateIndex, int money, OptionsData options,
                                   int currentFps, int batteryLevel) {
         renderer.applyCameraTransform(0, 0, 1.0f);
-        renderer.begin();
+
+        // HUD（自持 batch)
         drawHud(gameState, currentFps, batteryLevel);
+
+        // 塔按钮与精灵（自持 batch，含脏标记）
         drawTowerButtons(money, stateIndex);
+        drawTowerButtonSprites();
+
+        // UI 组件（各自管理 begin/end，不可包在外部 batch 内）
         uiRenderer.renderControlButtons(gameState.getRunState());
         if (options != null) uiRenderer.renderScaleSlider(options, camera);
-        drawTowerButtonSprites();
-        renderer.end();
     }
 
     // ============================================================
@@ -367,6 +371,7 @@ public class GameSceneRenderer {
      * HUD 使用屏幕坐标，相机变换已在 renderScreenLayer 中设置
      */
     private void drawHud(GameState gameState, int currentFps, int batteryLevel) {
+        renderer.begin();
         int screenW = renderer.getScreenWidth();
         int screenH = renderer.getScreenHeight();
         int runState = gameState.getRunState();
@@ -462,6 +467,7 @@ public class GameSceneRenderer {
         renderer.drawRect(0, 20, screenW, 1, 0.15f, 0.15f, 0.15f, 0.9f);
         renderer.drawText("[1]机枪  [2]冰塔  [3]火箭  [空格]暂停  [F]快进  [Esc]退出", 10, 14,
                 0.65f, 0.7f, 0.75f, 1.0f);
+        renderer.end();
     }
 
     /**
@@ -496,6 +502,7 @@ public class GameSceneRenderer {
     private void drawTowerButtonSprites() {
         UiRenderer.TowerButtonInfo[] buttons = uiRenderer.getTowerButtons();
         if (buttons == null) return;
+        renderer.begin();
 
         for (UiRenderer.TowerButtonInfo button : buttons) {
             if (button == null) continue;
@@ -527,6 +534,7 @@ public class GameSceneRenderer {
                         drawX, turretY, drawW, drawH);
             }
         }
+        renderer.end();
     }
 
     // ============================================================
