@@ -142,7 +142,7 @@ public abstract class GameScreen implements Screen {
     }
 
     /** 千位分隔格式化 */
-    protected static String formatWithCommas(int value) {
+    public static String formatWithCommas(int value) {
         String s = Integer.toString(value);
         StringBuilder sb = new StringBuilder(s.length() + 2);
         int start = s.length() % 3;

@@ -245,33 +245,10 @@ public class GamePlayScreen extends GameScreen implements GameInputController.Ga
 
         int stateIndex = gameLoop.getStateIndex();
         int runState = gameState.getRunState();
-        int levelType = gameState.getLevelData().getLevelType();
+        // 世界坐标层（1 次 begin/end，包含背景/塔/敌人/子弹/事件/预览）
+        sceneRenderer.renderWorldLayer(gameState, stateIndex);
 
-        // 1. 绘制地图背景
-        sceneRenderer.drawBackground(renderer, levelType, gameState);
-
-        // 2. 绘制塔
-        sceneRenderer.drawTowers(renderer, gameState, gameLoop);
-
-        // 3. 绘制敌人（含血条）
-        sceneRenderer.drawEnemies(renderer, stateIndex, gameState);
-
-        // 4. 绘制子弹
-        sceneRenderer.drawBullets(renderer, stateIndex, gameState);
-
-        // 5. 绘制敌人击败事件（金钱奖励飘字）
-        sceneRenderer.drawEnemyDefeatedEvents(renderer, stateIndex, gameState);
-
-        // 6. 绘制激活塔预览（放置前显示）
-        sceneRenderer.drawActiveTowerPreview(renderer, gameState, gameLoop);
-
-        // 6. 绘制 HUD（使用屏幕坐标）
-        drawHud(renderer, runState);
-
-        // 7. 绘制塔按钮（使用屏幕坐标）
-        sceneRenderer.drawTowerButtons(renderer, stateIndex, gameState);
-
-        // 8. 绘制升级对话框（如果需要）
+        // 升级对话框（条件绘制，自持 batch）
         boolean dialogVisible = false;
         if (runState == GameState.GAME_RUNNING || runState == GameState.GAME_FAST_FWD) {
             uiRenderer.renderUpgradeDialog(gameState.getMoney(), stateIndex);
@@ -294,6 +271,11 @@ public class GamePlayScreen extends GameScreen implements GameInputController.Ga
         // 8.2 更新和绘制成就弹窗动画
         game.getAchievementRenderer().update(game.getServices().getAudio());
         game.getAchievementRenderer().draw(renderer);
+
+        // 屏幕坐标层（1 次 begin/end，包含 HUD + 塔按钮 + 控制按钮 + 缩放滑块 + 塔精灵）
+        int currentFps = gameLoop.getCurrentFps();
+        int batteryLevel = game.getServices().getBatteryLevel();
+        sceneRenderer.renderScreenLayer(gameState, stateIndex, gameState.getMoney(), options, currentFps, batteryLevel);
 
         // 9. 状态覆盖层
         switch (runState) {
@@ -320,114 +302,6 @@ public class GamePlayScreen extends GameScreen implements GameInputController.Ga
 
 
 
-
-
-    /**
-     * 绘制 HUD 信息栏
-     * HUD 使用屏幕坐标，需要恢复默认矩阵（无相机变换）
-     */
-    private void drawHud(GameRenderer renderer, int runState) {
-        renderer.applyCameraTransform(0, 0, 1.0f);
-        renderer.begin();
-
-        int screenW = renderer.getScreenWidth();
-        int screenH = renderer.getScreenHeight();
-
-        // 顶部信息栏背景（科幻面板风格）
-        renderer.drawRect(0, screenH - 34, screenW, 34, 0.06f, 0.08f, 0.16f, 0.93f);
-        renderer.drawRect(0, screenH - 1, screenW, 2, 0.2f, 0.36f, 0.55f, 0.85f);
-        renderer.drawRect(0, screenH - 34, screenW, 1, 0.12f, 0.24f, 0.4f, 0.6f);
-
-        float yTop = screenH - 18;
-        float xStart = 12;
-
-        renderer.drawText("L:" + gameState.getLevelData().getLevelNum(), xStart, yTop,
-                0.9f, 0.95f, 1.0f, 1.0f);
-        renderer.drawText("$" + formatWithCommas(sceneRenderer.getDisplayMoney()), xStart + 80, yTop,
-                0.3f, 1.0f, 0.3f, 1.0f);
-        // 生命值 + 血量条
-        int hp = sceneRenderer.getDisplayHealth();
-        renderer.drawText("HP " + hp, xStart + 200, yTop,
-                0.15f, 0.92f, 0.28f, 1.0f);
-        int hpMax = gameState.getStartingHealth();
-        float hpRatio = Math.min(1.0f, (float)hp / Math.max(1, hpMax));
-        renderer.drawRect(xStart + 242, screenH - 16, 40, 4, 0.35f, 0.12f, 0.12f, 0.7f);
-        renderer.drawRect(xStart + 242, screenH - 16, 40 * hpRatio, 4, 0.1f, 0.85f, 0.22f, 0.9f);
-
-        // 分数显示：处理累计动画
-        int score = sceneRenderer.getDisplayScore();
-        int pendingScore = 0;
-
-        // 从敌人击败事件中获取待添加的分数
-        for (GameEvent e = gameState.getGameEventList(GameEvent.EVENT_ENEMY_DEFEATED); e != null; e = e.next) {
-            if (e.var[GameEvent.VAR_ENEMY_FULL_SCORE] > 0) {
-                pendingScore += e.var[GameEvent.VAR_ENEMY_FULL_SCORE];
-                e.var[GameEvent.VAR_ENEMY_FULL_SCORE] = 0; // 标记已处理
-            }
-        }
-
-        // 显示分数
-        String scoreText;
-        if (score >= 1000) {
-            scoreText = "PTS:" + formatWithCommas(score);
-        } else {
-            scoreText = "PTS:" + score;
-        }
-        if (pendingScore > 0) {
-            scoreText += " +" + pendingScore;
-        }
-        renderer.drawText(scoreText, xStart + 320, yTop,
-                1.0f, 1.0f, 0.3f, 1.0f);
-
-        String stateStr;
-        float stateColor_r, stateColor_g, stateColor_b;
-        switch (runState) {
-            case GameState.GAME_RUNNING:
-                stateStr = "▶ 运行中";
-                stateColor_r = 0.3f; stateColor_g = 1.0f; stateColor_b = 0.3f;
-                break;
-            case GameState.GAME_PAUSED:
-                stateStr = "⏸ 暂停";
-                stateColor_r = 1.0f; stateColor_g = 0.8f; stateColor_b = 0.2f;
-                break;
-            case GameState.GAME_FAST_FWD:
-                stateStr = "⏩ 快进";
-                stateColor_r = 1.0f; stateColor_g = 0.5f; stateColor_b = 0.2f;
-                break;
-            case GameState.GAME_NOT_STARTED:
-                stateStr = "⏹ 准备";
-                stateColor_r = 0.6f; stateColor_g = 0.6f; stateColor_b = 0.6f;
-                break;
-            default:
-                stateStr = "";
-                stateColor_r = stateColor_g = stateColor_b = 0.7f;
-                break;
-        }
-        renderer.drawText(stateStr, screenW - 120, yTop, stateColor_r, stateColor_g, stateColor_b, 1.0f);
-
-        if (options != null && options.optionValue(OptionsData.SHOW_DRAW_PERFORMANCE)) {
-            renderer.drawText("FPS:" + gameLoop.getCurrentFps(), 12, screenH - 50,
-                    0.6f, 0.8f, 1.0f, 0.9f);
-        }
-        if (options != null && options.optionValue(OptionsData.SHOW_ZOOM_LEVEL)) {
-            renderer.drawText("z:" + String.format("%.1f×", camera.getScale()), 12, screenH - 65,
-                    0.7f, 0.7f, 0.7f, 0.9f);
-        }
-        if (options != null && options.optionValue(OptionsData.SHOW_BATTERY_GAUGE)) {
-            int batteryLevel = game.getServices().getBatteryLevel();
-            if (batteryLevel >= 0) {
-                renderer.drawText("🔋 " + batteryLevel + "%", screenW - 80, screenH - 50,
-                        0.7f, 0.7f, 0.7f, 0.9f);
-            }
-        }
-
-        renderer.drawRect(0, 0, screenW, 20, 0.02f, 0.02f, 0.03f, 0.7f);
-        renderer.drawRect(0, 20, screenW, 1, 0.15f, 0.15f, 0.15f, 0.9f);
-        renderer.drawText("[1]机枪  [2]冰塔  [3]火箭  [空格]暂停  [F]快进  [Esc]退出", 10, 14,
-                0.65f, 0.7f, 0.75f, 1.0f);
-
-        renderer.end();
-    }
 
 
     /**

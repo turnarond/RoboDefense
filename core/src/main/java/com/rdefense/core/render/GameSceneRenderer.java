@@ -11,14 +11,14 @@ import com.rdefense.core.game.GameTower;
 import com.rdefense.core.game.Starfield;
 import com.rdefense.core.game.TowerData;
 import com.rdefense.core.platform.GameRenderer;
-import com.rdefense.core.render.CameraManager;
-import com.rdefense.core.render.GameLoop;
-import com.rdefense.core.render.SpriteNames;
-import com.rdefense.core.render.UiRenderer;
+import com.rdefense.core.scene.GameScreen;
 
 /**
  * 游戏场景渲染器 — 从 GamePlayScreen 提取的渲染逻辑
  * 负责绘制地图背景、塔、敌人、子弹、UI 元素等
+ *
+ * 批次策略：全局缩减为 renderWorldLayer / renderScreenLayer 两对 begin/end，
+ * 覆盖层（暂停/胜利/失败/升级对话框）由 GamePlayScreen 条件调用自持批次。
  */
 public class GameSceneRenderer {
 
@@ -71,12 +71,57 @@ public class GameSceneRenderer {
         }
     }
 
+    // ============================================================
+    // World layer（单次 begin/end，世界坐标）
+    // ============================================================
+
+    /**
+     * 绘制世界坐标层（单次 begin/end）
+     * 对应原版各 draw* 步骤 1-6：背景、塔、敌人、子弹、击败事件、塔预览
+     */
+    public void renderWorldLayer(GameState gameState, int stateIndex) {
+        int levelType = gameState.getLevelData().getLevelType();
+        renderer.applyCameraTransform(camera.getXBase(), camera.getYBase(), camera.getScale());
+        renderer.begin();
+        drawBackground(levelType, gameState);
+        drawTowers(gameState, stateIndex);
+        drawEnemies(stateIndex, gameState);
+        drawBullets(stateIndex, gameState);
+        drawEnemyDefeatedEvents(stateIndex, gameState);
+        drawActiveTowerPreview(gameState, stateIndex);
+        renderer.end();
+    }
+
+    // ============================================================
+    // Screen layer（单次 begin/end，屏幕坐标）
+    // ============================================================
+
+    /**
+     * 绘制屏幕坐标层（单次 begin/end）
+     * 对应 HUD + 塔按钮 + 控制按钮 + 缩放滑块 + 塔精灵预览
+     */
+    public void renderScreenLayer(GameState gameState, int stateIndex, int money, OptionsData options,
+                                  int currentFps, int batteryLevel) {
+        renderer.applyCameraTransform(0, 0, 1.0f);
+        renderer.begin();
+        drawHud(gameState, currentFps, batteryLevel);
+        drawTowerButtons(money, stateIndex);
+        uiRenderer.renderControlButtons(gameState.getRunState());
+        if (options != null) uiRenderer.renderScaleSlider(options, camera);
+        drawTowerButtonSprites();
+        renderer.end();
+    }
+
+    // ============================================================
+    // 世界坐标绘制子方法（无 begin/end，无相机变换）
+    // ============================================================
+
     /**
      * 绘制地图背景图
      * 原版逻辑：redrawBackground 在 (0,0) 绘制，但 Canvas 已应用了 matrix 变换
      * 这里先应用相机变换，然后在世界坐标原点绘制地图
      */
-    public void drawBackground(GameRenderer renderer, int levelType, GameState gameState) {
+    private void drawBackground(int levelType, GameState gameState) {
         boolean useClassic = options != null && options.optionValue(OptionsData.CLASSIC_BACKGROUNDS);
         String bgName = useClassic
                 ? SpriteNames.levelBackgroundClassic(levelType)
@@ -85,10 +130,6 @@ public class GameSceneRenderer {
         int worldW = gameState.getLevelData().getGridWidth() * GRID_PIXEL_SIZE;
         int worldH = gameState.getLevelData().getGridHeight() * GRID_PIXEL_SIZE;
 
-        // 先应用相机变换
-        renderer.applyCameraTransform(camera.getXBase(), camera.getYBase(), camera.getScale());
-
-        renderer.begin();
         // 在世界坐标原点绘制地图（会被相机变换映射到正确位置）
         renderer.drawSprite(bgName, 0, 0, worldW, worldH);
 
@@ -98,8 +139,6 @@ public class GameSceneRenderer {
             starfield.update();
             starfield.draw(renderer, 0, 0);
         }
-
-        renderer.end();
     }
 
     /**
@@ -108,14 +147,11 @@ public class GameSceneRenderer {
      * 1. 背景层：绘制 images[0] 底座
      * 2. 前景层：绘制 images[frameIndex] 转头
      */
-    public void drawTowers(GameRenderer renderer, GameState gameState, GameLoop gameLoop) {
-        // 显式施加相机变换（与世界坐标绘制一致）
-        renderer.applyCameraTransform(camera.getXBase(), camera.getYBase(), camera.getScale());
-        renderer.begin();
+    private void drawTowers(GameState gameState, int stateIndex) {
         for (GameTower t = gameState.getTowerList(); t != null; t = t.next) {
             int type = t.getType();
             int direction = t.getDirection();
-            int animFrame = gameLoop.getStateIndex() >> 1;
+            int animFrame = stateIndex >> 1;
             int frameIndex = TowerData.getDirectionFrameIndex(type, direction, animFrame);
             int totalFrames = TowerData.getTotalFrames(type);
             String spriteSheetName = SpriteNames.tower(type);
@@ -136,16 +172,13 @@ public class GameSceneRenderer {
             // 2. 绘制转头（帧 frameIndex）
             renderer.drawSpriteFrame(spriteSheetName, frameIndex, totalFrames, wx, turretWorldY, towerSize, towerSize);
         }
-        renderer.end();
     }
 
     /**
      * 绘制所有敌人（精灵图 + 状态效果 + 血条）
      * 使用世界坐标直接绘制
      */
-    public void drawEnemies(GameRenderer renderer, int stateIndex, GameState gameState) {
-        renderer.applyCameraTransform(camera.getXBase(), camera.getYBase(), camera.getScale());
-        renderer.begin();
+    private void drawEnemies(int stateIndex, GameState gameState) {
         for (Enemy e = gameState.getEnemyList(); e != null; e = e.next) {
             int wx = e.calcPixelX();
             int wy = e.calcPixelY();
@@ -191,17 +224,13 @@ public class GameSceneRenderer {
                 renderer.drawRect(barX, barY, barW * healthRatio, barH, 0.0f, 0.9f, 0.0f, 0.9f);
             }
         }
-        renderer.end();
     }
 
     /**
      * 绘制所有子弹（精灵图）
      * 使用世界坐标直接绘制
      */
-    public void drawBullets(GameRenderer renderer, int stateIndex, GameState gameState) {
-        renderer.applyCameraTransform(camera.getXBase(), camera.getYBase(), camera.getScale());
-        renderer.begin();
-
+    private void drawBullets(int stateIndex, GameState gameState) {
         for (Bullet b = gameState.getBulletList(); b != null; b = b.next) {
             int size = b.getSize(stateIndex);
             float wx = b.getX() - size / 2f;
@@ -224,18 +253,13 @@ public class GameSceneRenderer {
                 renderer.drawRect(wx, wy, size, size, r, g, bl, 1.0f);
             }
         }
-
-        renderer.end();
     }
 
     /**
      * 绘制敌人击败事件（金钱奖励和分数飘字）
      * 参考 Android 原版 Display.handleEnemyDefeatedMoneyAdd
      */
-    public void drawEnemyDefeatedEvents(GameRenderer renderer, int stateIndex, GameState gameState) {
-        renderer.applyCameraTransform(camera.getXBase(), camera.getYBase(), camera.getScale());
-        renderer.begin();
-
+    private void drawEnemyDefeatedEvents(int stateIndex, GameState gameState) {
         for (GameEvent e = gameState.getGameEventList(GameEvent.EVENT_ENEMY_DEFEATED); e != null; e = e.next) {
             int dist = stateIndex - e.var[GameEvent.VAR_ENEMY_STATE_IDX];
             if (dist < 0 || dist >= 10) {
@@ -261,14 +285,12 @@ public class GameSceneRenderer {
             renderer.drawText(scoreString, xpos + 1, ypos - 12 + 1, 0.0f, 0.0f, 0.0f, 0.8f);
             renderer.drawText(scoreString, xpos, ypos - 12, 0.0f, 1.0f, 1.0f, 1.0f);
         }
-
-        renderer.end();
     }
 
     /**
      * 绘制激活塔预览（放置前显示范围圈和半透明塔）
      */
-    public void drawActiveTowerPreview(GameRenderer renderer, GameState gameState, GameLoop gameLoop) {
+    private void drawActiveTowerPreview(GameState gameState, int stateIndex) {
         int activeTowerId = uiRenderer.getActiveTowerId();
         if (activeTowerId < 0) return;
 
@@ -279,10 +301,6 @@ public class GameSceneRenderer {
         // 检查放置是否有效
         boolean valid = gameState.checkTowerPlacement(gridX, gridY, activeTowerId, false)
                 && TowerData.cost(activeTowerId) <= gameState.getMoney();
-
-        // 应用相机变换（与世界坐标绘制一致）
-        renderer.applyCameraTransform(camera.getXBase(), camera.getYBase(), camera.getScale());
-        renderer.begin();
 
         // 绘制攻击范围圈（原版使用攻击半径，单位是世界像素）
         float worldCenterX = gridX * GRID_PIXEL_SIZE + GRID_PIXEL_SIZE / 2f;
@@ -308,7 +326,7 @@ public class GameSceneRenderer {
         // 绘制塔精灵预览（原版绘制 tower image + direction image）
         String spriteSheetName = SpriteNames.tower(activeTowerId);
         int totalFrames = TowerData.getTotalFrames(activeTowerId);
-        int animFrame = gameLoop.getStateIndex() >> 1;
+        int animFrame = stateIndex >> 1;
         int frameIndex = TowerData.getDirectionFrameIndex(activeTowerId, 270, animFrame);
         int towerHeight = TowerData.towerHeight(activeTowerId);
 
@@ -334,14 +352,118 @@ public class GameSceneRenderer {
                 baseX, turretY,
                 towerSize, towerSize,
                 1.0f, 1.0f, 1.0f, 0.7f);
+    }
 
-        renderer.end();
+    // ============================================================
+    // 屏幕坐标绘制子方法（无 begin/end）
+    // ============================================================
+
+    /**
+     * 绘制 HUD 信息栏
+     * HUD 使用屏幕坐标，相机变换已在 renderScreenLayer 中设置
+     */
+    private void drawHud(GameState gameState, int currentFps, int batteryLevel) {
+        int screenW = renderer.getScreenWidth();
+        int screenH = renderer.getScreenHeight();
+        int runState = gameState.getRunState();
+
+        // 顶部信息栏背景（科幻面板风格）
+        renderer.drawRect(0, screenH - 34, screenW, 34, 0.06f, 0.08f, 0.16f, 0.93f);
+        renderer.drawRect(0, screenH - 1, screenW, 2, 0.2f, 0.36f, 0.55f, 0.85f);
+        renderer.drawRect(0, screenH - 34, screenW, 1, 0.12f, 0.24f, 0.4f, 0.6f);
+
+        float yTop = screenH - 18;
+        float xStart = 12;
+
+        renderer.drawText("L:" + gameState.getLevelData().getLevelNum(), xStart, yTop,
+                0.9f, 0.95f, 1.0f, 1.0f);
+        renderer.drawText("$" + GameScreen.formatWithCommas(displayMoney), xStart + 80, yTop,
+                0.3f, 1.0f, 0.3f, 1.0f);
+        // 生命值 + 血量条
+        int hp = displayHealth;
+        renderer.drawText("HP " + hp, xStart + 200, yTop,
+                0.15f, 0.92f, 0.28f, 1.0f);
+        int hpMax = gameState.getStartingHealth();
+        float hpRatio = Math.min(1.0f, (float)hp / Math.max(1, hpMax));
+        renderer.drawRect(xStart + 242, screenH - 16, 40, 4, 0.35f, 0.12f, 0.12f, 0.7f);
+        renderer.drawRect(xStart + 242, screenH - 16, 40 * hpRatio, 4, 0.1f, 0.85f, 0.22f, 0.9f);
+
+        // 分数显示：处理累计动画
+        int score = displayScore;
+        int pendingScore = 0;
+
+        // 从敌人击败事件中获取待添加的分数
+        for (GameEvent e = gameState.getGameEventList(GameEvent.EVENT_ENEMY_DEFEATED); e != null; e = e.next) {
+            if (e.var[GameEvent.VAR_ENEMY_FULL_SCORE] > 0) {
+                pendingScore += e.var[GameEvent.VAR_ENEMY_FULL_SCORE];
+                e.var[GameEvent.VAR_ENEMY_FULL_SCORE] = 0; // 标记已处理
+            }
+        }
+
+        // 显示分数
+        String scoreText;
+        if (score >= 1000) {
+            scoreText = "PTS:" + GameScreen.formatWithCommas(score);
+        } else {
+            scoreText = "PTS:" + score;
+        }
+        if (pendingScore > 0) {
+            scoreText += " +" + pendingScore;
+        }
+        renderer.drawText(scoreText, xStart + 320, yTop,
+                1.0f, 1.0f, 0.3f, 1.0f);
+
+        String stateStr;
+        float stateColor_r, stateColor_g, stateColor_b;
+        switch (runState) {
+            case GameState.GAME_RUNNING:
+                stateStr = "▶ 运行中";
+                stateColor_r = 0.3f; stateColor_g = 1.0f; stateColor_b = 0.3f;
+                break;
+            case GameState.GAME_PAUSED:
+                stateStr = "⏸ 暂停";
+                stateColor_r = 1.0f; stateColor_g = 0.8f; stateColor_b = 0.2f;
+                break;
+            case GameState.GAME_FAST_FWD:
+                stateStr = "⏩ 快进";
+                stateColor_r = 1.0f; stateColor_g = 0.5f; stateColor_b = 0.2f;
+                break;
+            case GameState.GAME_NOT_STARTED:
+                stateStr = "⏹ 准备";
+                stateColor_r = 0.6f; stateColor_g = 0.6f; stateColor_b = 0.6f;
+                break;
+            default:
+                stateStr = "";
+                stateColor_r = stateColor_g = stateColor_b = 0.7f;
+                break;
+        }
+        renderer.drawText(stateStr, screenW - 120, yTop, stateColor_r, stateColor_g, stateColor_b, 1.0f);
+
+        if (options != null && options.optionValue(OptionsData.SHOW_DRAW_PERFORMANCE)) {
+            renderer.drawText("FPS:" + currentFps, 12, screenH - 50,
+                    0.6f, 0.8f, 1.0f, 0.9f);
+        }
+        if (options != null && options.optionValue(OptionsData.SHOW_ZOOM_LEVEL)) {
+            renderer.drawText("z:" + String.format("%.1f×", camera.getScale()), 12, screenH - 65,
+                    0.7f, 0.7f, 0.7f, 0.9f);
+        }
+        if (options != null && options.optionValue(OptionsData.SHOW_BATTERY_GAUGE)) {
+            if (batteryLevel >= 0) {
+                renderer.drawText("🔋 " + batteryLevel + "%", screenW - 80, screenH - 50,
+                        0.7f, 0.7f, 0.7f, 0.9f);
+            }
+        }
+
+        renderer.drawRect(0, 0, screenW, 20, 0.02f, 0.02f, 0.03f, 0.7f);
+        renderer.drawRect(0, 20, screenW, 1, 0.15f, 0.15f, 0.15f, 0.9f);
+        renderer.drawText("[1]机枪  [2]冰塔  [3]火箭  [空格]暂停  [F]快进  [Esc]退出", 10, 14,
+                0.65f, 0.7f, 0.75f, 1.0f);
     }
 
     /**
-     * 绘制塔按钮（屏幕坐标右下角）
+     * 绘制塔按钮（初始化 + 按钮渲染，不含控制按钮/缩放滑块/精灵预览）
      */
-    public void drawTowerButtons(GameRenderer renderer, int stateIndex, GameState gameState) {
+    private void drawTowerButtons(int money, int stateIndex) {
         // 初始化塔按钮（只初始化一次）
         if (uiRenderer.getTowerButtons() == null) {
             UiRenderer.TowerButtonInfo[] buttons = new UiRenderer.TowerButtonInfo[3];
@@ -356,24 +478,15 @@ public class GameSceneRenderer {
             uiRenderer.initTowerButtons(buttons);
         }
 
-        uiRenderer.renderTowerButtons(gameState.getMoney(), stateIndex);
-        uiRenderer.renderControlButtons(gameState.getRunState());
-
-        // 绘制缩放滑块条（受选项 6 控制）
-        uiRenderer.renderScaleSlider(options, camera);
-
-        // 在按钮上绘制塔精灵预览
-        drawTowerButtonSprites(renderer);
+        uiRenderer.renderTowerButtons(money, stateIndex);
     }
 
     /**
-     * 在塔按钮上绘制塔精灵图
+     * 在塔按钮上绘制塔精灵图（无 batch 边界）
      */
-    public void drawTowerButtonSprites(GameRenderer renderer) {
+    private void drawTowerButtonSprites() {
         UiRenderer.TowerButtonInfo[] buttons = uiRenderer.getTowerButtons();
         if (buttons == null) return;
-
-        renderer.begin();
 
         for (UiRenderer.TowerButtonInfo button : buttons) {
             if (button == null) continue;
@@ -405,9 +518,11 @@ public class GameSceneRenderer {
                         drawX, turretY, drawW, drawH);
             }
         }
-
-        renderer.end();
     }
+
+    // ============================================================
+    // 公开辅助方法
+    // ============================================================
 
     /**
      * 创建塔按钮配置
