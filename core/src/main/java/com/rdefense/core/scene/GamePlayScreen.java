@@ -877,20 +877,6 @@ public class GamePlayScreen extends GameScreen {
         return button;
     }
 
-    /** 千位分隔格式化（原版 HudEntry.makeNumber） */
-    private static String formatWithCommas(int value) {
-        String s = Integer.toString(value);
-        StringBuilder sb = new StringBuilder(s.length() + 2);
-        int start = s.length() % 3;
-        if (start == 0) start = 3;
-        sb.append(s, 0, start);
-        for (int i = start; i < s.length(); i += 3) {
-            sb.append(',');
-            sb.append(s, i, Math.min(i + 3, s.length()));
-        }
-        return sb.toString();
-    }
-
     /**
      * 绘制敌人击败事件（金钱奖励和分数飘字）
      * 参考 Android 原版 Display.handleEnemyDefeatedMoneyAdd
