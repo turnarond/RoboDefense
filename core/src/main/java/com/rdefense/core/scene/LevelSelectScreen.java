@@ -321,6 +321,11 @@ public class LevelSelectScreen extends GameScreen {
         r.drawText("开始游戏", startX + startW/2 - 22, startY + 18,
                 unlocked ? 0.82f : 0.45f, unlocked ? 0.88f : 0.45f, unlocked ? 0.85f : 0.45f, 1.0f);
 
+        // ========== 快捷键提示 ==========
+        r.drawRect(0, 0, r.getScreenWidth(), 22, 0.05f, 0.07f, 0.15f, 0.75f);
+        r.drawText("←→ 切换地图  ↑↓ 调节难度  Enter 开始  ESC 返回",
+                10, 6, 0.65f, 0.68f, 0.75f, 1f);
+
         r.end();
     }
 
