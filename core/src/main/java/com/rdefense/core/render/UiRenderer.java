@@ -252,24 +252,6 @@ public class UiRenderer {
         renderer.end();
     }
 
-    public void renderActiveTowerPreview(int gridX, int gridY, int towerType, float attackRange) {
-        renderer.begin();
-
-        int worldX = gridX * 32;
-        int worldY = gridY * 32;
-
-        float screenX = camera.worldToScreenX(worldX);
-        float screenY = camera.worldToScreenY(worldY);
-
-        float screenRange = attackRange * camera.getScale();
-        renderer.drawCircle(screenX, screenY, screenRange, 0.5f, 0.5f, 1.0f, 0.3f);
-
-        String region = "tower_" + towerType + "_preview";
-        renderer.drawSprite(region, screenX, screenY, 0.5f, 0.5f, 1.0f, 0.5f);
-
-        renderer.end();
-    }
-
     public void renderPauseOverlay(String pauseText) {
         renderer.begin();
 
