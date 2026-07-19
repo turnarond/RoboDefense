@@ -34,6 +34,10 @@ public class GameSceneRenderer {
     private int displayScore = -1;
     private int displayHealth = -1;
 
+    // 塔按钮脏标记（金钱或激活塔变化时才重绘按钮区域）
+    private int lastMoney = -1;
+    private int lastActiveTowerId = -2;
+
     public GameSceneRenderer(GameRenderer renderer, CameraManager camera, UiRenderer uiRenderer) {
         this.renderer = renderer;
         this.camera = camera;
@@ -464,6 +468,11 @@ public class GameSceneRenderer {
      * 绘制塔按钮（初始化 + 按钮渲染，不含控制按钮/缩放滑块/精灵预览）
      */
     private void drawTowerButtons(int money, int stateIndex) {
+        // 脏标记：金钱和激活塔未变化时跳过重绘（按钮绘制是 renderScreenLayer 中最耗时的批次操作）
+        if (money == lastMoney && uiRenderer.getActiveTowerId() == lastActiveTowerId) return;
+        lastMoney = money;
+        lastActiveTowerId = uiRenderer.getActiveTowerId();
+
         // 初始化塔按钮（只初始化一次）
         if (uiRenderer.getTowerButtons() == null) {
             UiRenderer.TowerButtonInfo[] buttons = new UiRenderer.TowerButtonInfo[3];
