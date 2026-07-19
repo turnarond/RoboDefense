@@ -88,7 +88,7 @@ public class GameSceneRenderer {
         drawTowers(gameState, stateIndex);
         drawEnemies(stateIndex, gameState);
         drawBullets(stateIndex, gameState);
-        drawEnemyDefeatedEvents(stateIndex, gameState);
+        drawEnemyDefeatedEvents(gameState);
         drawActiveTowerPreview(gameState, stateIndex);
         renderer.end();
     }
@@ -266,9 +266,10 @@ public class GameSceneRenderer {
      * 绘制敌人击败事件（金钱奖励和分数飘字）
      * 参考 Android 原版 Display.handleEnemyDefeatedMoneyAdd
      */
-    private void drawEnemyDefeatedEvents(int stateIndex, GameState gameState) {
+    private void drawEnemyDefeatedEvents(GameState gameState) {
+        int now = gameState.getStateIndex();
         for (GameEvent e = gameState.getGameEventList(GameEvent.EVENT_ENEMY_DEFEATED); e != null; e = e.next) {
-            int dist = stateIndex - e.var[GameEvent.VAR_ENEMY_STATE_IDX];
+            int dist = now - e.var[GameEvent.VAR_ENEMY_STATE_IDX];
             if (dist < 0 || dist >= 10) {
                 e.finished = true;
                 continue;
@@ -505,26 +506,24 @@ public class GameSceneRenderer {
             int fh = renderer.getSpriteFrameHeight(sheetName, totalFrames);
             if (fw <= 0 || fh <= 0) { fw = 32; fh = 32; }
 
-            // 缩放精灵以适配按钮（留足上下空间给文字：上方价格14px + 下方塔名14px）
+            // 缩放精灵——留上下各14px给价格/塔名文字
             float scale = Math.min(
                     (button.width - 12) / (float) fw,
-                    (button.height - 32) / (float) fh);
+                    (button.height - 30) / (float) fh);
             int drawW = (int) (fw * scale);
             int drawH = (int) (fh * scale);
 
-            // 居中底座（偏上方以露出底部塔名）
+            // 底座居中于按钮内（上下留白均等）
             float drawX = button.screenX + (button.width - drawW) / 2f;
-            float drawY = button.screenY + button.height - drawH - 10;
+            float drawY = button.screenY + (button.height - drawH) / 2f;
 
             renderer.drawSpriteFrame(sheetName, 0, totalFrames,
                     drawX, drawY, drawW, drawH);
 
-            // 绘制转头 — 居中略上移，使炮管在底座上方可见
+            // 绘制转头 — 与底座同位置
             if (totalFrames > 1) {
-                int towerH = TowerData.towerHeight(button.towerType);
-                float turretY = drawY - (towerH * scale) * 0.5f;
                 renderer.drawSpriteFrame(sheetName, 1, totalFrames,
-                        drawX, turretY, drawW, drawH);
+                        drawX, drawY, drawW, drawH);
             }
         }
         renderer.end();
