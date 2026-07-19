@@ -108,11 +108,11 @@ public class GameSceneRenderer {
         // HUD（自持 batch)
         drawHud(gameState, currentFps, batteryLevel);
 
-        // 塔精灵（先绘制，避免遮盖名称/价格文字）
-        drawTowerButtonSprites();
-
-        // 塔按钮面板与文字（后绘制，叠在精灵之上）
+        // 塔按钮面板（背景+名称+价格——先绘制）
         drawTowerButtons(money, stateIndex);
+
+        // 塔精灵（后绘制，叠在面板之上但不遮盖边缘文字）
+        drawTowerButtonSprites();
 
         // UI 组件（各自管理 begin/end，不可包在外部 batch 内）
         uiRenderer.renderControlButtons(gameState.getRunState());
@@ -444,7 +444,7 @@ public class GameSceneRenderer {
                 stateColor_r = stateColor_g = stateColor_b = 0.7f;
                 break;
         }
-        renderer.drawText(stateStr, screenW - 120, yTop, stateColor_r, stateColor_g, stateColor_b, 1.0f);
+        renderer.drawText(stateStr, xStart + 460, yTop, stateColor_r, stateColor_g, stateColor_b, 1.0f);
 
         if (options != null && options.optionValue(OptionsData.SHOW_DRAW_PERFORMANCE)) {
             renderer.drawText("FPS:" + currentFps, 12, screenH - 50,
@@ -505,16 +505,16 @@ public class GameSceneRenderer {
             int fh = renderer.getSpriteFrameHeight(sheetName, totalFrames);
             if (fw <= 0 || fh <= 0) { fw = 32; fh = 32; }
 
-            // 将精灵缩放适配按钮尺寸
+            // 缩放精灵以适配按钮（留足上下空间给文字：上方价格14px + 下方塔名14px）
             float scale = Math.min(
                     (button.width - 12) / (float) fw,
-                    (button.height - 26) / (float) fh);
+                    (button.height - 32) / (float) fh);
             int drawW = (int) (fw * scale);
             int drawH = (int) (fh * scale);
 
-            // 居中绘制底座
+            // 居中底座（偏上方以露出底部塔名）
             float drawX = button.screenX + (button.width - drawW) / 2f;
-            float drawY = button.screenY + (button.height - drawH) / 2f - 6;
+            float drawY = button.screenY + button.height - drawH - 10;
 
             renderer.drawSpriteFrame(sheetName, 0, totalFrames,
                     drawX, drawY, drawW, drawH);
