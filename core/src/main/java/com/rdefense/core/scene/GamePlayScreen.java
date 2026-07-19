@@ -44,6 +44,12 @@ public class GamePlayScreen extends GameScreen {
     private boolean resumeMode = false;     // 从快速存档恢复
     private int loadSlotId = -1;            // 从指定槽位加载（>=0 有效）
     private int lastRunState = -1; // 上一帧 run_state，用于检测胜负转换
+    private boolean upgradeDialogWasVisible; // 升级对话框上一帧可见状态（用于自动暂停）
+
+    // HUD 数字滚动动画（渐进逼近目标值）
+    private int displayMoney = -1;
+    private int displayScore = -1;
+    private int displayHealth = -1;
 
     public GamePlayScreen(RoboDefenseGame game) {
         super(game);
@@ -219,6 +225,29 @@ public class GamePlayScreen extends GameScreen {
             gameLoop.setFastFwdMode(runState == GameState.GAME_FAST_FWD);
             gameLoop.tick(stateIndex -> gameState.nextState());
 
+            // HUD 数字滚动动画：渐进逼近
+            {
+                int targetMoney = gameState.getMoney();
+                if (displayMoney < 0) displayMoney = targetMoney;
+                else if (displayMoney != targetMoney) {
+                    int step = Math.max(1, Math.abs(targetMoney - displayMoney) / 6);
+                    if (displayMoney < targetMoney) displayMoney = Math.min(displayMoney + step, targetMoney);
+                    else displayMoney = Math.max(displayMoney - step, targetMoney);
+                }
+                int targetScore = gameState.getScore();
+                if (displayScore < 0) displayScore = targetScore;
+                else if (displayScore != targetScore) {
+                    int step = Math.max(1, Math.abs(targetScore - displayScore) / 6);
+                    if (displayScore < targetScore) displayScore = Math.min(displayScore + step, targetScore);
+                    else displayScore = Math.max(displayScore - step, targetScore);
+                }
+                int targetHP = gameState.getHealth();
+                if (displayHealth < 0) displayHealth = targetHP;
+                else if (displayHealth != targetHP) {
+                    displayHealth = displayHealth + (targetHP - displayHealth > 0 ? 1 : -1);
+                }
+            }
+
             // 成就弹窗：轮询队列并触发渲染器动画
             int achievementType = com.rdefense.core.game.AchievementData.dequeueEarned();
             if (achievementType >= 0) {
@@ -287,9 +316,18 @@ public class GamePlayScreen extends GameScreen {
         drawTowerButtons(renderer, stateIndex);
 
         // 8. 绘制升级对话框（如果需要）
+        boolean dialogVisible = false;
         if (runState == GameState.GAME_RUNNING || runState == GameState.GAME_FAST_FWD) {
             uiRenderer.renderUpgradeDialog(gameState.getMoney(), stateIndex);
+            dialogVisible = uiRenderer.isUpgradeDialogVisible();
         }
+        if (dialogVisible && !upgradeDialogWasVisible) {
+            int rs = gameState.getRunState();
+            if (rs == GameState.GAME_RUNNING || rs == GameState.GAME_FAST_FWD) {
+                gameState.togglePause();
+            }
+        }
+        upgradeDialogWasVisible = dialogVisible;
 
         // 8.1 绘制放置失败提示
         uiRenderer.renderPlacementFailure();
@@ -505,10 +543,10 @@ public class GamePlayScreen extends GameScreen {
 
         renderer.drawText("L:" + gameState.getLevelData().getLevelNum(), xStart, yTop,
                 0.9f, 0.95f, 1.0f, 1.0f);
-        renderer.drawText("$" + formatWithCommas(gameState.getMoney()), xStart + 80, yTop,
+        renderer.drawText("$" + formatWithCommas(displayMoney), xStart + 80, yTop,
                 0.3f, 1.0f, 0.3f, 1.0f);
         // 生命值 + 血量条
-        int hp = gameState.getHealth();
+        int hp = displayHealth;
         renderer.drawText("HP " + hp, xStart + 200, yTop,
                 0.15f, 0.92f, 0.28f, 1.0f);
         int hpMax = gameState.getStartingHealth();
@@ -517,7 +555,7 @@ public class GamePlayScreen extends GameScreen {
         renderer.drawRect(xStart + 242, screenH - 16, 40 * hpRatio, 4, 0.1f, 0.85f, 0.22f, 0.9f);
 
         // 分数显示：处理累计动画
-        int score = gameState.getScore();
+        int score = displayScore;
         int pendingScore = 0;
 
         // 从敌人击败事件中获取待添加的分数
