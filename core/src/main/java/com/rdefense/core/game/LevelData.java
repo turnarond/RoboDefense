@@ -218,7 +218,6 @@ public final class LevelData {
                 path_obstacles = new int[]{50397441, 100729090, 33751297, 84082945, 50594305, 33882369, 50725377, 101057025, 34013441, 84345089, 17367041, 67698945, 101253377, 34210049, 84541697, 34276353, 101449985, 34407425, 34472193, 84803841, 17760513, 51314945, 101646593, 34668801, 85000449, 51511553, 101843457, 34799873, 68354561, 51642625, 34931713, 102105347, 18285057, 35127553};
                 width = 9;
                 height = 26;
-                this.starfield = new Starfield(level_seed);
                 break;
             case SKYTOWER_LEVEL:
                 path_start = new int[]{771, 264};
@@ -228,7 +227,6 @@ public final class LevelData {
                         67436802, 151323138, 251986178, 67633410, 252182786, 50987777, 235537153};
                 width = 20;
                 height = 12;
-                this.starfield = new Starfield(level_seed);
                 break;
             case MIXER_LEVEL:
                 // 混合器模式：使用种子码动态生成布局

@@ -214,6 +214,8 @@ public class LevelSelectScreen extends GameScreen {
             prefs.putDifficulty(currentDifficulty);
             prefs.putSurvivalMode(survivalMode);
             prefs.putTowerMixerEnabled(towerMixerEnabled);
+            prefs.putMixerValue(digitsToValue(mixerDigits));
+            prefs.putTowerMixerValue(digitsToValue(towerMixerDigits));
         }
         GamePlayScreen gps = new GamePlayScreen(game);
         gps.configureLevel(currentMap, currentDifficulty);

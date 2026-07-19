@@ -421,16 +421,7 @@ public final class GameState {
         this.unit_created_this_level = false;
     }
 
-    /** 原版 dequeueAchievements：从成就队列取出新达成项并分配事件（类型 10） */
-    private void dequeueAchievements() {
-        for (int type = AchievementData.dequeueEarned(); type >= 0;
-                type = AchievementData.dequeueEarned()) {
-            GameEvent e = allocateGameEvent(GameEvent.EVENT_ACHIEVEMENT_EARNED);
-            e.var[GameEvent.VAR_ACHIEVEMENT_TYPE] = type;
-            e.var[GameEvent.VAR_ACHIEVEMENT_FRAME] = 0;
-            e.var[GameEvent.VAR_ACHIEVEMENT_STATE] = 0;
-        }
-    }
+    /** 已删除——成就弹窗现由 GamePlayScreen 直接轮询 dequeueEarned()。保留此注释防止误恢复。 */
 
     /**
      * 游戏胜利时触发所有相关成就检测
