@@ -60,9 +60,7 @@ public class CreditsScreen extends GameScreen {
         r.drawRect(0, 0, sw, sh, 0.03f, 0.05f, 0.12f, 1.0f);
 
         // 标题栏
-        r.drawRect(0, sh - 34, sw, 34, 0.06f, 0.08f, 0.16f, 0.93f);
-        r.drawRect(0, sh - 1, sw, 2, 0.2f, 0.36f, 0.55f, 0.85f);
-        r.drawText("Credits", 16, sh - 20, 0.75f, 0.85f, 0.95f, 1.0f);
+        drawTitleBar("Credits");
 
         // 内容区（居中半透明面板）
         int pw = Math.min(sw - 64, 420), ph = 260;

@@ -95,9 +95,7 @@ public class RewardScreen extends GameScreen implements InputProcessor {
         renderer.drawRect(0, 0, screenWidth, screenHeight, 0.03f, 0.05f, 0.12f, 1.0f);
 
         // 标题栏
-        renderer.drawRect(0, screenHeight - 34, screenWidth, 34, 0.06f, 0.08f, 0.16f, 0.93f);
-        renderer.drawRect(0, screenHeight - 1, screenWidth, 2, 0.2f, 0.36f, 0.55f, 0.85f);
-        renderer.drawText("奖励商店", 16, screenHeight - 20, 0.75f, 0.85f, 0.95f, 1.0f);
+        drawTitleBar("奖励商店");
 
         long points = RewardData.getRewardPoints();
         renderer.drawText("积分 " + formatPoints(points), 140, screenHeight - 20, 0.82f, 0.75f, 0.28f, 1.0f);
