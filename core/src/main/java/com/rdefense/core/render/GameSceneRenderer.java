@@ -369,102 +369,87 @@ public class GameSceneRenderer {
      * 绘制 HUD 信息栏
      * HUD 使用屏幕坐标，相机变换已在 renderScreenLayer 中设置
      */
+    private int hpPulseTimer; // HP ≤ 3 时呼吸脉冲计时器
+
     private void drawHud(GameState gameState, int currentFps, int batteryLevel) {
         renderer.begin();
         int screenW = renderer.getScreenWidth();
         int screenH = renderer.getScreenHeight();
         int runState = gameState.getRunState();
-
-        // 顶部信息栏背景（科幻面板风格）
-        renderer.drawRect(0, screenH - 34, screenW, 34, 0.06f, 0.08f, 0.16f, 0.93f);
-        renderer.drawRect(0, screenH - 1, screenW, 2, 0.2f, 0.36f, 0.55f, 0.85f);
-        renderer.drawRect(0, screenH - 34, screenW, 1, 0.12f, 0.24f, 0.4f, 0.6f);
-
         float yTop = screenH - 18;
         float xStart = 12;
 
+        // === 顶部信息条（半透明面板，紧凑一行） ===
+        renderer.drawRect(0, screenH - 32, screenW, 32, 0.03f, 0.04f, 0.1f, 0.88f);
+        renderer.drawRect(0, screenH - 1, screenW, 1, 0.12f, 0.2f, 0.3f, 0.5f);
+
+        // 关卡
         renderer.drawText("L:" + gameState.getLevelData().getLevelNum(), xStart, yTop,
-                0.9f, 0.95f, 1.0f, 1.0f);
-        renderer.drawText("$" + GameScreen.formatWithCommas(displayMoney), xStart + 80, yTop,
-                0.3f, 1.0f, 0.3f, 1.0f);
-        // 生命值 + 血量条
+                0.5f, 0.55f, 0.65f, 1.0f);
+
+        // 金钱（指挥金）
+        renderer.drawText("$" + GameScreen.formatWithCommas(displayMoney), xStart + 60, yTop,
+                0.83f, 0.67f, 0.16f, 1.0f);
+
+        // 生命值 + 血量条（HP≤3 时脉冲呼吸）
         int hp = displayHealth;
-        renderer.drawText("HP " + hp, xStart + 200, yTop,
-                0.15f, 0.92f, 0.28f, 1.0f);
         int hpMax = gameState.getStartingHealth();
         float hpRatio = Math.min(1.0f, (float)hp / Math.max(1, hpMax));
-        renderer.drawRect(xStart + 242, screenH - 16, 40, 4, 0.35f, 0.12f, 0.12f, 0.7f);
-        renderer.drawRect(xStart + 242, screenH - 16, 40 * hpRatio, 4, 0.1f, 0.85f, 0.22f, 0.9f);
+        float hpAlpha;
+        if (hp <= 3) {
+            hpPulseTimer++;
+            hpAlpha = 0.5f + 0.5f * (float)Math.abs(Math.sin(hpPulseTimer * 0.05));
+        } else {
+            hpAlpha = 1.0f;
+        }
+        renderer.drawText("HP " + hp, xStart + 200, yTop,
+                0.6f * hpAlpha, 0.9f * hpAlpha, 0.25f * hpAlpha, 1.0f);
+        renderer.drawRect(xStart + 238, screenH - 15, 38, 3, 0.3f, 0.08f, 0.08f, 0.5f);
+        renderer.drawRect(xStart + 238, screenH - 15, 38 * hpRatio, 3,
+                0.1f * hpAlpha, 0.85f * hpAlpha, 0.22f * hpAlpha, 0.9f);
 
-        // 分数显示：处理累计动画
+        // 分数
         int score = displayScore;
         int pendingScore = 0;
-
-        // 从敌人击败事件中读取待添加的分数（只读——不修改游戏数据）
         for (GameEvent e = gameState.getGameEventList(GameEvent.EVENT_ENEMY_DEFEATED); e != null; e = e.next) {
             if (e.var[GameEvent.VAR_ENEMY_FULL_SCORE] > 0) {
                 pendingScore += e.var[GameEvent.VAR_ENEMY_FULL_SCORE];
             }
         }
+        String scoreText = (score >= 1000) ? "PTS:" + GameScreen.formatWithCommas(score)
+                                           : "PTS:" + score;
+        if (pendingScore > 0) scoreText += " +" + pendingScore;
+        renderer.drawText(scoreText, xStart + 300, yTop, 0.55f, 0.58f, 0.65f, 1.0f);
 
-        // 显示分数
-        String scoreText;
-        if (score >= 1000) {
-            scoreText = "PTS:" + GameScreen.formatWithCommas(score);
-        } else {
-            scoreText = "PTS:" + score;
-        }
-        if (pendingScore > 0) {
-            scoreText += " +" + pendingScore;
-        }
-        renderer.drawText(scoreText, xStart + 320, yTop,
-                1.0f, 1.0f, 0.3f, 1.0f);
-
+        // 状态
         String stateStr;
-        float stateColor_r, stateColor_g, stateColor_b;
+        float sr, sg, sb;
         switch (runState) {
             case GameState.GAME_RUNNING:
-                stateStr = "运行中";
-                stateColor_r = 0.3f; stateColor_g = 1.0f; stateColor_b = 0.3f;
-                break;
+                stateStr = "运行中"; sr = 0.3f; sg = 0.95f; sb = 0.3f; break;
             case GameState.GAME_PAUSED:
-                stateStr = "暂停";
-                stateColor_r = 1.0f; stateColor_g = 0.8f; stateColor_b = 0.2f;
-                break;
+                stateStr = "暂停";   sr = 0.9f; sg = 0.7f; sb = 0.2f; break;
             case GameState.GAME_FAST_FWD:
-                stateStr = "快进中";
-                stateColor_r = 1.0f; stateColor_g = 0.5f; stateColor_b = 0.2f;
-                break;
+                stateStr = "快进中"; sr = 0.9f; sg = 0.5f; sb = 0.2f; break;
             case GameState.GAME_NOT_STARTED:
-                stateStr = "准备";
-                stateColor_r = 0.6f; stateColor_g = 0.6f; stateColor_b = 0.6f;
-                break;
+                stateStr = "准备";   sr = 0.5f; sg = 0.5f; sb = 0.5f; break;
             default:
-                stateStr = "";
-                stateColor_r = stateColor_g = stateColor_b = 0.7f;
-                break;
+                stateStr = "";       sr = sg = sb = 0.5f; break;
         }
-        renderer.drawText(stateStr, xStart + 460, yTop, stateColor_r, stateColor_g, stateColor_b, 1.0f);
+        renderer.drawText(stateStr, screenW - 52, yTop, sr, sg, sb, 0.9f);
 
+        // FPS/缩放（调试层，可选显示）
         if (options != null && options.optionValue(OptionsData.SHOW_DRAW_PERFORMANCE)) {
-            renderer.drawText("FPS:" + currentFps, 12, screenH - 50,
-                    0.6f, 0.8f, 1.0f, 0.9f);
+            renderer.drawText("FPS:" + currentFps, 12, screenH - 48, 0.4f, 0.45f, 0.55f, 0.7f);
         }
         if (options != null && options.optionValue(OptionsData.SHOW_ZOOM_LEVEL)) {
-            renderer.drawText("z:" + String.format("%.1f×", camera.getScale()), 12, screenH - 65,
-                    0.7f, 0.7f, 0.7f, 0.9f);
-        }
-        if (options != null && options.optionValue(OptionsData.SHOW_BATTERY_GAUGE)) {
-            if (batteryLevel >= 0) {
-                renderer.drawText("🔋 " + batteryLevel + "%", screenW - 80, screenH - 50,
-                        0.7f, 0.7f, 0.7f, 0.9f);
-            }
+            renderer.drawText("×" + String.format("%.1f", camera.getScale()), 12, screenH - 60,
+                    0.4f, 0.45f, 0.55f, 0.7f);
         }
 
-        renderer.drawRect(0, 0, screenW, 20, 0.02f, 0.02f, 0.03f, 0.7f);
-        renderer.drawRect(0, 20, screenW, 1, 0.15f, 0.15f, 0.15f, 0.9f);
-        renderer.drawText("[1]机枪  [2]冰塔  [3]火箭  [空格]暂停  [F]快进  [Esc]退出", 10, 14,
-                0.65f, 0.7f, 0.75f, 1.0f);
+        // === 脚注：极细灰字，无背景条 ===
+        renderer.drawText("[1]机枪  [2]冰塔  [3]火箭  [空格]暂停  [F]快进  [Esc]退出",
+                10, 10, 0.35f, 0.38f, 0.42f, 0.55f);
         renderer.end();
     }
 

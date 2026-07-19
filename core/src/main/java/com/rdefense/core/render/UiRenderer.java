@@ -77,25 +77,23 @@ public class UiRenderer {
             boolean canAfford = button.cost <= money;
             boolean isActive = hasActiveTower && activeTowerId == button.towerType;
 
-            // 科幻面板背景
+            // 纯色状态编码：钢板蓝(可买) / 暗深红(买不起) / 全息青框(选中)
             float br, bg, bb, ba;
             if (isActive) {
-                br = 0.12f; bg = 0.35f; bb = 0.6f; ba = 0.92f;
+                br = 0.06f; bg = 0.16f; bb = 0.28f; ba = 0.94f;  // 钢板蓝底
             } else if (canAfford) {
-                br = 0.10f; bg = 0.18f; bb = 0.28f; ba = 0.88f;
+                br = 0.08f; bg = 0.14f; bb = 0.26f; ba = 0.85f;
             } else {
-                br = 0.18f; bg = 0.10f; bb = 0.12f; ba = 0.65f;
+                br = 0.16f; bg = 0.06f; bb = 0.08f; ba = 0.6f;   // 暗深红
             }
             renderer.drawRect(screenX, screenY, button.width, button.height, br, bg, bb, ba);
 
-            // 边框
+            // 选中态：全息青窄边框
             if (isActive) {
-                renderer.drawRect(screenX, screenY, button.width, 2, 0.25f, 0.55f, 0.85f, 1.0f);
-                renderer.drawRect(screenX, screenY + button.height - 2, button.width, 2, 0.25f, 0.55f, 0.85f, 1.0f);
-                renderer.drawRect(screenX, screenY, 2, button.height, 0.25f, 0.55f, 0.85f, 1.0f);
-                renderer.drawRect(screenX + button.width - 2, screenY, 2, button.height, 0.25f, 0.55f, 0.85f, 1.0f);
-            } else {
-                renderer.drawRect(screenX, screenY + button.height - 1, button.width, 1, 0.15f, 0.25f, 0.38f, 0.6f);
+                renderer.drawRect(screenX, screenY, button.width, 2, 0.05f, 0.94f, 0.94f, 0.85f);
+                renderer.drawRect(screenX, screenY + button.height - 2, button.width, 2, 0.05f, 0.94f, 0.94f, 0.85f);
+                renderer.drawRect(screenX, screenY, 2, button.height, 0.05f, 0.94f, 0.94f, 0.85f);
+                renderer.drawRect(screenX + button.width - 2, screenY, 2, button.height, 0.05f, 0.94f, 0.94f, 0.85f);
             }
 
 
@@ -141,57 +139,55 @@ public class UiRenderer {
         // 半透明遮罩
         renderer.drawRect(0, 0, renderer.getScreenWidth(), renderer.getScreenHeight(), 0f, 0f, 0f, 0.35f);
 
-        // 主面板
-        renderer.drawRect(dialogX, dialogY, upgradeDialog.width, upgradeDialog.height, 0.07f, 0.1f, 0.2f, 0.96f);
-        renderer.drawRect(dialogX, dialogY + upgradeDialog.height - 1, upgradeDialog.width, 2, 0.2f, 0.36f, 0.55f, 0.85f);
-        renderer.drawRect(dialogX, dialogY, upgradeDialog.width, 1, 0.12f, 0.24f, 0.4f, 0.5f);
+        // 数据卡片面板
+        renderer.drawRect(dialogX, dialogY, upgradeDialog.width, upgradeDialog.height,
+                0.04f, 0.06f, 0.14f, 0.96f);
+        renderer.drawRect(dialogX, dialogY + upgradeDialog.height - 1, upgradeDialog.width, 2,
+                0.83f, 0.67f, 0.16f, 0.6f);
 
-        // 标题栏
-        float headerY = dialogY + upgradeDialog.height - 28;
-        renderer.drawRect(dialogX + 8, headerY, upgradeDialog.width - 16, 24, 0.1f, 0.16f, 0.28f, 0.9f);
-        renderer.drawText(getTowerDisplayName(upgradeDialog.towerType), dialogX + 16, headerY + 17, 0.8f, 0.85f, 0.95f, 1.0f);
-        String lvText = "Lv." + getUpgradeLevel(upgradeDialog.towerType);
-        renderer.drawText(lvText, dialogX + upgradeDialog.width - 60, headerY + 17, 0.5f, 0.7f, 0.5f, 1.0f);
+        // 标题：塔名 + 等级
+        float headerY = dialogY + upgradeDialog.height - 30;
+        renderer.drawText(getTowerDisplayName(upgradeDialog.towerType),
+                dialogX + 14, headerY + 18, 0.83f, 0.78f, 0.7f, 1.0f);
+        renderer.drawText("Lv." + getUpgradeLevel(upgradeDialog.towerType),
+                dialogX + upgradeDialog.width - 56, headerY + 18, 0.4f, 0.8f, 0.5f, 0.85f);
 
-        // 属性
-        float propY = headerY - 32;
+        // 属性行
+        float propY = headerY - 22;
         int power = TowerData.power(upgradeDialog.towerType);
         int range = TowerData.attackRadius(upgradeDialog.towerType);
         int delay = TowerData.shotDelay(upgradeDialog.towerType);
-        renderer.drawText("攻击 " + power + "    范围 " + range + "    射速 " + delay + "帧",
-                dialogX + 16, propY, 0.55f, 0.62f, 0.72f, 0.9f);
+        renderer.drawText("攻" + power + "  范" + range + "  速" + delay,
+                dialogX + 14, propY, 0.5f, 0.55f, 0.6f, 0.85f);
+
+        // 细分隔线
+        float divY = propY - 10;
+        renderer.drawRect(dialogX + 12, divY, upgradeDialog.width - 24, 1, 0.25f, 0.3f, 0.35f, 0.4f);
 
         // 升级选项
         for (int i = 0; i < upgradeDialog.options.length; i++) {
             UpgradeOption option = upgradeDialog.options[i];
             if (option == null) continue;
-
-            float optionY = getOptionY(dialogY, i);
+            float optionY = divY - 8 - (i + 1) * 30;
             boolean canAfford = option.cost <= money;
-
-            float oR = canAfford ? 0.08f : 0.15f;
-            float oG = canAfford ? 0.2f : 0.1f;
-            float oB = canAfford ? 0.12f : 0.12f;
-            renderer.drawRect(dialogX + 10, optionY, upgradeDialog.width - 20, 28, oR, oG, oB, 0.82f);
-            renderer.drawRect(dialogX + 10, optionY + 27, upgradeDialog.width - 20, 1, oR * 1.5f, oG * 1.5f, oB * 1.5f, 0.5f);
-
-            renderer.drawText(option.name, dialogX + 16, optionY + 18, 0.82f, 0.85f, 0.9f, 1.0f);
-
-            String bonus = "";
-            if (option.powerBonus != 0) bonus += "攻击+" + option.powerBonus + " ";
-            if (option.rangeBonus != 0) bonus += "范围+" + option.rangeBonus;
-            if (!bonus.isEmpty()) renderer.drawText(bonus, dialogX + 120, optionY + 18, 0.5f, 0.75f, 0.5f, 1.0f);
-
-            String priceText = "$" + option.cost;
-            renderer.drawText(priceText, dialogX + upgradeDialog.width - 50, optionY + 18,
-                    canAfford ? 0.5f : 0.9f, canAfford ? 0.9f : 0.3f, canAfford ? 0.4f : 0.3f, 1.0f);
+            float oR = canAfford ? 0.06f : 0.14f, oG = canAfford ? 0.16f : 0.08f, oB = canAfford ? 0.1f : 0.1f;
+            renderer.drawRect(dialogX + 12, optionY, upgradeDialog.width - 24, 26, oR, oG, oB, 0.78f);
+            renderer.drawText(option.name, dialogX + 18, optionY + 16, 0.78f, 0.82f, 0.88f, 1.0f);
+            StringBuilder bonus = new StringBuilder();
+            if (option.powerBonus != 0) bonus.append("攻+").append(option.powerBonus).append(" ");
+            if (option.rangeBonus != 0) bonus.append("范+").append(option.rangeBonus);
+            if (bonus.length() > 0)
+                renderer.drawText(bonus.toString(), dialogX + 110, optionY + 16, 0.4f, 0.7f, 0.4f, 0.9f);
+            renderer.drawText("$" + option.cost, dialogX + upgradeDialog.width - 50, optionY + 16,
+                    canAfford ? 0.4f : 0.85f, canAfford ? 0.85f : 0.25f, canAfford ? 0.35f : 0.2f, 1.0f);
         }
 
-        // 出售按钮
+        // 出售按钮（锈红底，细边框）
         float sellY = dialogY + 10;
-        renderer.drawRect(dialogX + 10, sellY, upgradeDialog.width - 20, 28, 0.2f, 0.08f, 0.08f, 0.8f);
-        renderer.drawRect(dialogX + 10, sellY + 27, upgradeDialog.width - 20, 1, 0.4f, 0.18f, 0.15f, 0.7f);
-        renderer.drawText("出售 $" + upgradeDialog.sellValue, dialogX + upgradeDialog.width / 2 - 30, sellY + 18, 0.95f, 0.75f, 0.4f, 1.0f);
+        renderer.drawRect(dialogX + 12, sellY, upgradeDialog.width - 24, 26, 0.32f, 0.1f, 0.1f, 0.78f);
+        renderer.drawRect(dialogX + 12, sellY, upgradeDialog.width - 24, 1, 0.5f, 0.2f, 0.18f, 0.5f);
+        renderer.drawText("出售 $" + upgradeDialog.sellValue, dialogX + upgradeDialog.width / 2 - 30,
+                sellY + 16, 0.9f, 0.7f, 0.3f, 1.0f);
 
         renderer.end();
     }
@@ -226,21 +222,18 @@ public class UiRenderer {
 
     public void renderControlButtons(int runState) {
         renderer.begin();
-
-        int pauseX = renderer.getScreenWidth() - 100;
-        int pauseY = renderer.getScreenHeight() - 30;
-        String pauseIcon = (runState == 0 || runState == 4) ? "icon_pause" : "icon_play";
-        renderer.drawSprite(pauseIcon, pauseX, pauseY);
-
-        int ffX = renderer.getScreenWidth() - 60;
-        int ffY = renderer.getScreenHeight() - 30;
-        String ffIcon = (runState == 4) ? "icon_ff_active" : "icon_ff";
-        renderer.drawSprite(ffIcon, ffX, ffY);
-
-        int menuX = renderer.getScreenWidth() - 30;
-        int menuY = renderer.getScreenHeight() - 30;
-        renderer.drawSprite("icon_menu", menuX, menuY);
-
+        int screenW = renderer.getScreenWidth();
+        // 控制按钮：文字标签，放在屏幕右下，塔按钮左侧
+        float btnX = screenW - 215;
+        float btnY = 26;
+        // 暂停/继续
+        String pauseLabel = (runState == 0 || runState == 4) ? "暂停" : "继续";
+        renderer.drawRect(btnX, btnY, 52, 22, 0.06f, 0.12f, 0.2f, 0.75f);
+        renderer.drawText(pauseLabel, btnX + 6, btnY + 15, 0.7f, 0.75f, 0.82f, 0.9f);
+        // 快进
+        String ffLabel = (runState == 4) ? "快进中" : "快进";
+        renderer.drawRect(btnX + 58, btnY, 52, 22, 0.06f, 0.12f, 0.2f, 0.75f);
+        renderer.drawText(ffLabel, btnX + 64, btnY + 15, 0.7f, 0.75f, 0.82f, 0.9f);
         renderer.end();
     }
 
