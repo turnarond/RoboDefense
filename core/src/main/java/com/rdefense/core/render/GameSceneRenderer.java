@@ -434,7 +434,7 @@ public class GameSceneRenderer {
             default:
                 stateStr = "";       sr = sg = sb = 0.5f; break;
         }
-        renderer.drawText(stateStr, xStart + 50, yTop, sr, sg, sb, 0.95f);
+        renderer.drawText(stateStr, xStart + 400, yTop, sr, sg, sb, 0.95f);
 
         // FPS/缩放（调试层，可选显示）
         if (options != null && options.optionValue(OptionsData.SHOW_DRAW_PERFORMANCE)) {

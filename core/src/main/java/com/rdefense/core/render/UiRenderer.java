@@ -139,9 +139,9 @@ public class UiRenderer {
         // 轻遮罩——游戏仍然可见
         renderer.drawRect(0, 0, renderer.getScreenWidth(), renderer.getScreenHeight(), 0f, 0f, 0f, 0.22f);
 
-        // 数据卡片面板
+        // 数据卡片面板（半透明，游戏可见）
         renderer.drawRect(dialogX, dialogY, upgradeDialog.width, upgradeDialog.height,
-                0.04f, 0.06f, 0.14f, 0.96f);
+                0.04f, 0.06f, 0.14f, 0.82f);
         renderer.drawRect(dialogX, dialogY + upgradeDialog.height - 1, upgradeDialog.width, 2,
                 0.83f, 0.67f, 0.16f, 0.6f);
 
