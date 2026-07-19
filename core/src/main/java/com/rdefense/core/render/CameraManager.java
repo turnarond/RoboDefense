@@ -213,6 +213,18 @@ public class CameraManager {
         return (int) camera.viewportHeight;
     }
 
+    /** 视锥左边界（世界坐标） */
+    public float getViewLeft() { return getXBase(); }
+
+    /** 视锥右边界（世界坐标） */
+    public float getViewRight() { return getXBase() + camera.viewportWidth * camera.zoom; }
+
+    /** 视锥上边界（世界坐标） */
+    public float getViewTop() { return getYBase(); }
+
+    /** 视锥下边界（世界坐标） */
+    public float getViewBottom() { return getYBase() + camera.viewportHeight * camera.zoom; }
+
     /**
      * 更新屏幕尺寸（窗口 resize 时调用）
      */
