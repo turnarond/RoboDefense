@@ -253,9 +253,41 @@ gps.configureLevel(map, diff); // 新游戏（关卡选择）
 - `GameState.endGame()` → `gameWonAchievements()`
 - `GameTower.handleMine()` — 地雷链成就
 
-## APK 保真修复记录（2026-07-17〜19）
+## APK 保真修复 + UI 重构记录（2026-07-17〜20）
 
-基于 `docs/06-APK差距分析报告.md` 完成四轮修复（计划①〜④）+ UI 评审重构（计划 1A/1B/2A/2B/2C/2D），覆盖全部 6 个 P0 与约 40 条 P1。
+共 83 次提交，覆盖 6 个 P0、~40 条 P1、UI 全线重设计。
+
+### APK 保真（计划①〜④）——游戏逻辑
+- **结算体系**：`saveScore` 四奖金公式（20%/1%/20%/金钱×难度×2）、`RewardData.gameWon` 难度递增、`/500` 除数、逐图分数倍率
+- **数值保真**：溅射半径 256/2048、出售 1.5×、SAM 减免、死亡帧 `(value<<1)+10`、速度 `×32/40`、冲击波类型10
+- **健壮性**：事件 500 上限、敌人 100 上限、读档校验+强制暂停、每10关自动存档、消息槽位
+- **存档补全**：10 字段（8 成就追踪 + at_exit/exiting_grid）
+- **新功能**：混合器面板、Starfield、ScoreOverlay、控制按钮接入
+- **死代码清理**：GameRewardCalculator、HudRenderer、tower_pool
+
+### UI 全线重设计——视觉/交互/架构
+- **主菜单「指挥中心」**：深空黑底+金色信标+全息青副标题+扫描线动画
+- **战斗 HUD「战术覆盖层」**：紧凑一行(地图/难/$/杀/HP/PTS)、HP≤3脉冲呼吸、状态入脚注
+- **升级弹窗「数据卡片」**：细分隔线、出售锈红、半透明玻璃面板
+- **商城**：纯图标(底座+转头)、钢板蓝/暗深红/全息青边框状态编码
+- **成就界面**：56px行高、描述文字+进度条、分类标签
+- **架构重构**：提取 GameSceneRenderer(446行)+GameInputController(67行)、GamePlayScreen 931→553行、标题栏/返回按钮统一到 GameScreen 基类、begin/end 10→2 对
+- **Y 排序**：塔+敌人统一经 GridObjectOrder 链表绘制
+- **字库补全**：10+ 缺失字符（？！▲▼←→×草混迹院）
+
+### 升级树修复
+- 二级机枪：删除错误的火焰塔(10)/防空塔(12)分支（原版仅升级到三级）
+- 升级弹窗点击坐标与渲染布局同步
+
+### 新增文件
+| 文件 | 用途 |
+|------|------|
+| `docs/06-APK差距分析报告.md` | 60 类全覆盖差距分析 |
+| `docs/07-UI设计交互评审报告.md` | 设计一致性与交互可用性 |
+| `docs/08-UI渲染架构评审报告.md` | 渲染性能与代码架构 |
+| `core/.../render/GameSceneRenderer.java` | 游戏场景渲染层(446行) |
+| `core/.../input/GameInputController.java` | 键盘输入控制(67行) |
+| `core/.../game/Starfield.java` | 星空粒子背景(47行) |
 
 ### 已修复的关键偏差
 - 恢复 `saveScore` 四奖金结算（20% 胜利奖金 + 1% 生命奖金 + 20% 完美奖金 + 金钱×难度×2）
@@ -275,20 +307,10 @@ gps.configureLevel(map, diff); // 新游戏（关卡选择）
 - `GameRewardCalculator` 系数表（ICE/LAVA/EXTREME）为臆造，已删除
 - 保真决策点：Z_ACCEL 保留当前（更物理正确的弹道）、TOUGH_MASK 恢复原版死代码、敌人拒放检查恢复、灼烧封顶恢复原版
 
-### 计划文件
-- `docs/06-APK差距分析报告.md` — 60 类全覆盖差距分析
-- `docs/07-UI设计交互评审报告.md` — 设计一致性与交互可用性评审
-- `docs/08-UI渲染架构评审报告.md` — 渲染性能与代码架构评审
-- `docs/superpowers/plans/2026-07-17-apk-parity-fix-1-scoring-numeric.md` — 计划① 结算/数值/健壮性
-- `docs/superpowers/plans/2026-07-17-apk-parity-fix-2-achievements.md` — 计划② 成就/存档/事件/HUD
-- `docs/superpowers/plans/2026-07-17-apk-parity-fix-3-ui.md` — 计划③ 混合器/UI/星空
-- `docs/superpowers/plans/2026-07-17-apk-parity-fix-4-cleanup.md` — 计划④ 微调/死代码
-- `docs/superpowers/plans/2026-07-19-ui-*.md` — UI 评审与重构系列计划
-
-### 重构架构变更
-- `GameSceneRenderer`（446行）：游戏场景渲染层，接管 GamePlayScreen 全部 draw* 方法
-- `GameInputController`（67行）：键盘输入处理层，ESCAPE/SPACE/F9 按键逻辑
-- `GamePlayScreen`：931→553行（-41%），纯协调角色
-- `Starfield`（47行）：宇宙/公路关卡星空粒子背景
-- begin/end 批次数：10-19→2 对/帧
-- 标题栏/返回按钮：7+6 Screen 统一到 GameScreen 基类
+### 关键架构变更
+- `GameSceneRenderer`（446行）+ `GameInputController`（67行）+ `Starfield`（47行）— 新增类
+- `GamePlayScreen`：931→553行（-41%）— 纯协调角色
+- 标题栏/返回按钮：7+6 Screen 统一到 `GameScreen` 基类
+- 塔+敌人 Y 排序：`drawSortedObjects` 经 `GridObjectOrder` 链表单次遍历
+- 升级树修复：二级机枪仅升级到三级（删除错误的火焰/防空分支）
+- CHINESE_CHARS：新增 10+ 缺失字符（？！▲▼←→×草混迹院等）
