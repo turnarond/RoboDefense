@@ -121,8 +121,12 @@ public class UiRenderer {
      * 计算某个升级选项的屏幕坐标
      */
     private float getOptionY(float dialogY, int index) {
-        // 标题栏高度 30, 属性显示 40, 间距 10, 选项间隔 35
-        return dialogY + upgradeDialog.height - 30 - 40 - 10 - (index + 1) * 35;
+        // 与 renderUpgradeDialog 中的布局一致：divY - 8 - (i+1)*30
+        // divY = propY - 10, propY = headerY - 22, headerY = dialogY + height - 30
+        float headerY = dialogY + upgradeDialog.height - 30;
+        float propY = headerY - 22;
+        float divY = propY - 10;
+        return divY - 8 - (index + 1) * 30;
     }
 
     public void renderUpgradeDialog(int money, int stateIndex) {

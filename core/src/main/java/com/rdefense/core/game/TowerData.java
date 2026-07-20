@@ -358,13 +358,8 @@ public final class TowerData {
                     case 2: return 12;
                     default: return -1;
                 }
-            case 2: // gun_tower2 → gun_tower3 / flame_tower / aa_tower
-                switch (upgrade_idx) {
-                    case 0: return 3;
-                    case 1: return 10;
-                    case 2: return 12;
-                    default: return -1;
-                }
+            case 2: // gun_tower2 → gun_tower3（原版仅一个升级选项）
+                return upgrade_idx == 0 ? 3 : -1;
             case 3: // gun_tower3 → heavy_aa_tower（铀弹奖励后升级）
                 if (RewardData.rewardLevel(RewardData.URANIUM_SHELLS) > 0) {
                     return upgrade_idx == 0 ? 13 : -1;
