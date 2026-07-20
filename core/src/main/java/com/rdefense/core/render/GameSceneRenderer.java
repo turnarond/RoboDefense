@@ -85,8 +85,7 @@ public class GameSceneRenderer {
         renderer.applyCameraTransform(camera.getXBase(), camera.getYBase(), camera.getScale());
         renderer.begin();
         drawBackground(levelType, gameState);
-        drawTowers(gameState, stateIndex);
-        drawEnemies(stateIndex, gameState);
+        drawSortedObjects(gameState, stateIndex);
         drawBullets(stateIndex, gameState);
         drawEnemyDefeatedEvents(gameState);
         drawActiveTowerPreview(gameState, stateIndex);
@@ -146,7 +145,66 @@ public class GameSceneRenderer {
     }
 
     /**
-     * 绘制所有塔（精灵图）
+     * Y 排序绘制塔+敌人（GridObjectOrder 确保远处→近处渲染顺序）
+     */
+    private void drawSortedObjects(GameState gameState, int stateIndex) {
+        com.rdefense.core.game.GridObject obj = gameState.getSortedList();
+        while (obj != null) {
+            if (obj.getClassType() == 1) { // 塔
+                GameTower t = (GameTower) obj;
+                drawSingleTower(t, stateIndex);
+            } else if (obj.getClassType() == 2) { // 敌人
+                Enemy e = (Enemy) obj;
+                drawSingleEnemy(e, stateIndex, gameState);
+            }
+            obj = obj.next_y;
+        }
+    }
+
+    private void drawSingleTower(GameTower t, int stateIndex) {
+        int type = t.getType();
+        int direction = t.getDirection();
+        int animFrame = stateIndex >> 1;
+        int frameIndex = TowerData.getDirectionFrameIndex(type, direction, animFrame);
+        int totalFrames = TowerData.getTotalFrames(type);
+        String spriteSheetName = SpriteNames.tower(type);
+        float wx = t.getGridX() * GRID_PIXEL_SIZE;
+        float wy = t.getGridY() * GRID_PIXEL_SIZE;
+        float towerSize = GRID_PIXEL_SIZE;
+        int towerHeight = TowerData.towerHeight(type);
+        float turretWorldY = wy + towerHeight;
+        renderer.drawSpriteFrame(spriteSheetName, 0, totalFrames, wx, wy, towerSize, towerSize);
+        renderer.drawSpriteFrame(spriteSheetName, frameIndex, totalFrames, wx, turretWorldY, towerSize, towerSize);
+    }
+
+    private void drawSingleEnemy(Enemy e, int stateIndex, GameState gameState) {
+        int wx = e.calcPixelX();
+        int wy = e.calcPixelY();
+        float size = GRID_PIXEL_SIZE;
+        String spriteSheetName = SpriteNames.enemy(e.getType());
+        int totalFrames = EnemyData.getTotalFrames(e.getType());
+        int animationFrame = (e.getFirstState() + stateIndex);
+        if (e.getSlowCounter() > 0) animationFrame >>= 1;
+        int frameIndex = animationFrame % totalFrames;
+        renderer.drawSpriteFrame(spriteSheetName, frameIndex, totalFrames, wx, wy, size, size);
+        // 减速/灼烧效果
+        if (e.getSlowCounter() > 0) {
+            renderer.drawRect(wx, wy, size, size, 0.2f, 0.3f, 0.9f, 0.3f);
+        }
+        if (e.getFireCounter() > 0) {
+            renderer.drawRect(wx, wy, size, size, 1.0f, 0.3f, 0.1f, 0.35f);
+        }
+        // 血条
+        int maxHp = e.getMaxHealth();
+        if (maxHp > 0 && e.getHealth() < maxHp) {
+            float hpRatio = (float) e.getHealth() / maxHp;
+            renderer.drawRect(wx + 4, wy + size + 2, 24, 3, 0.3f, 0.08f, 0.08f, 0.6f);
+            renderer.drawRect(wx + 4, wy + size + 2, 24 * hpRatio, 3, 0.1f, 0.85f, 0.22f, 0.8f);
+        }
+    }
+
+    /**
+     * 绘制所有塔（精灵图——已废弃，使用 drawSortedObjects）
      * 原版渲染流程：
      * 1. 背景层：绘制 images[0] 底座
      * 2. 前景层：绘制 images[frameIndex] 转头
