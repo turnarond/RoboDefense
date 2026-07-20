@@ -260,9 +260,11 @@ public class GamePlayScreen extends GameScreen implements GameInputController.Ga
         // 绘制短消息（如 HD 回退提示）
         uiRenderer.renderShortMessage();
 
-        // 8.2 更新和绘制成就弹窗动画
+        // 8.2 成就弹窗动画（自持 batch）
         game.getAchievementRenderer().update(game.getServices().getAudio());
+        renderer.begin();
         game.getAchievementRenderer().draw(renderer);
+        renderer.end();
 
         // 屏幕坐标层（1 次 begin/end，包含 HUD + 塔按钮 + 控制按钮 + 缩放滑块 + 塔精灵）
         int currentFps = gameLoop.getCurrentFps();
