@@ -239,7 +239,7 @@ gps.configureLevel(map, diff); // 新游戏（关卡选择）
 | NAPALM_SHELLS (12) | 火炮→凝固汽油弹 | `TowerData.shotType()` |
 | SLOW_BURN (15) | 地狱之塔→冲击波 | `TowerData.shotType()` |
 | AIR_SNIPER (13) | 重型防空范围×2 | `TowerData.attackRadiusSq()` |
-| FLEA_MARKET (16) | 出售价值×2 | `TowerData.sellValue()` |
+| FLEA_MARKET (16) | 出售价值×1.5 | `TowerData.sellValue()` (`value += value/2`) |
 | STARTING_CASH (8) | 初始金钱↑ | `GameState.initGame()` |
 | HEALTH_UPGRADE (7) | 初始生命↑ | `GameState.initGame()` |
 
