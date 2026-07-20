@@ -14,7 +14,7 @@ import java.util.List;
  */
 public class AchievementScreen extends GameScreen implements InputProcessor {
 
-    private static final int ROW_H = 44;
+    private static final int ROW_H = 56;
     private static final int TAB_W = 58, TAB_H = 30, TAB_GAP = 10;
 
     private AchievementData.AchievementCategory selectedCategory = null;
@@ -175,27 +175,39 @@ public class AchievementScreen extends GameScreen implements InputProcessor {
         for (int i = scrollOffset; i < max; i++) {
             int id = filtered.get(i);
             boolean done = AchievementData.isAchieved(id);
-            float br = done ? 0.1f : 0.06f, bg = done ? 0.22f : 0.08f, bb = done ? 0.32f : 0.12f;
+            // 行背景
+            float br = done ? 0.08f : 0.05f, bg = done ? 0.18f : 0.07f, bb = done ? 0.28f : 0.11f;
             r.drawRect(18, rowY, sw - 36, ROW_H - 2, br, bg, bb, 0.78f);
 
-            String name = AchievementData.getNameZh(id);
-            float nr = done ? 0.9f : 0.55f, ng = done ? 0.88f : 0.55f, nb = done ? 0.8f : 0.55f;
-            r.drawText(name, 28, rowY + ROW_H - 14, nr, ng, nb, 1.0f);
+            // 状态图标
+            if (done) {
+                r.drawRect(24, rowY + ROW_H - 20, 18, 16, 0.1f, 0.5f, 0.2f, 0.85f);
+                r.drawText("OK", 26, rowY + ROW_H - 8, 0.5f, 0.95f, 0.5f, 1.0f);
+            } else {
+                r.drawRect(24, rowY + ROW_H - 20, 18, 16, 0.15f, 0.15f, 0.18f, 0.55f);
+                r.drawText("--", 26, rowY + ROW_H - 8, 0.35f, 0.35f, 0.38f, 0.7f);
+            }
 
-            // 进度
+            // 名称
+            String name = AchievementData.getNameZh(id);
+            float nr = done ? 0.9f : 0.6f, ng = done ? 0.88f : 0.6f, nb = done ? 0.8f : 0.6f;
+            r.drawText(name, 52, rowY + ROW_H - 16, nr, ng, nb, 1.0f);
+
+            // 描述（如何达成）
+            String desc = AchievementData.getDescription(id);
+            if (desc != null && desc.length() > 0) {
+                r.drawText(desc, 52, rowY + 16, 0.4f, 0.45f, 0.5f, 0.8f);
+            }
+
+            // 进度条 + 分数
             int level = AchievementData.getLevel(id);
             int trigger = AchievementData.getTriggerLevel(id);
             if (trigger > 1) {
-                r.drawText(level + "/" + trigger, sw - 80, rowY + ROW_H - 14, 0.45f, 0.55f, 0.7f, 0.8f);
-            }
-
-            // 状态
-            if (done) {
-                r.drawRect(sw - 44, rowY + 10, 22, 18, 0.12f, 0.5f, 0.2f, 0.85f);
-                r.drawText("OK", sw - 40, rowY + 25, 0.6f, 0.95f, 0.6f, 1.0f);
-            } else {
-                r.drawRect(sw - 44, rowY + 10, 22, 18, 0.18f, 0.18f, 0.22f, 0.6f);
-                r.drawText("--", sw - 38, rowY + 25, 0.4f, 0.4f, 0.4f, 0.8f);
+                float pct = Math.min(1f, (float)level / trigger);
+                int barX = sw - 90;
+                r.drawText(level + "/" + trigger, barX - 8, rowY + ROW_H - 16, 0.5f, 0.55f, 0.65f, 0.85f);
+                r.drawRect(barX + 48, rowY + ROW_H - 18, 38, 4, 0.2f, 0.15f, 0.15f, 0.4f);
+                r.drawRect(barX + 48, rowY + ROW_H - 18, 38 * pct, 4, 0.05f, 0.75f, 0.25f, 0.75f);
             }
 
             rowY -= ROW_H;
