@@ -2,7 +2,9 @@
 
 ## v2.6.0 (2026-07-20) — APK Fidelity + UI Redesign
 
-85 commits. Based on `docs/06-APK差距分析报告.md` comprehensive 60-class comparison vs original Android APK (Build 2900).
+86 commits. Based on `docs/06-APK差距分析报告.md` comprehensive 60-class comparison vs original Android APK (Build 2900).
+
+> **运行时注意**：JDK 8-17 可直接 `java -jar desktop.jar` 运行。JDK 21+ 需加 `--enable-native-access=ALL-UNNAMED` 参数；退出时可能报 `Lwjgl3Cursor` 类缺失警告（libGDX 1.12.1 已知兼容性问题），不影响游戏运行。
 
 ### Game Logic — APK Fidelity
 - Restored `saveScore` 4-bonus settlement (20% win + 1% HP + 20% perfect + money×difficulty×2)
