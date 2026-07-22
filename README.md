@@ -12,6 +12,14 @@
 
 ### 截图
 
+| 主菜单 | 游戏界面 |
+|--------|---------|
+| ![主菜单](docs/images/主界面.png) | ![游戏界面](docs/images/游戏界面.png) |
+
+| 成就 | 奖励商店 |
+|------|---------|
+| ![成就](docs/images/成就.png) | ![奖励](docs/images/奖励.png) |
+
 > 运行 `java -jar desktop.jar` 体验
 
 ---

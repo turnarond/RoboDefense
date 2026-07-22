@@ -69,7 +69,7 @@ public class CreditsScreen extends GameScreen {
         r.drawRect(px, py + ph - 1, pw, 1, 0.18f, 0.32f, 0.5f, 0.6f);
 
         String[] lines = {"星际塔防", "Robo Defense", "",
-            "原作 MagicWach  |  移植 Open Source", "",
+            "原作 MagicWach  |  移植 turnarond", "",
             "libGDX 引擎  |  SimHei 字体", "",
             "仅供学习交流使用  |  感谢所有支持者"};
         float ty = py + ph - 30;

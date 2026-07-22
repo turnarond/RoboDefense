@@ -73,6 +73,8 @@ tools/
 *.gif
 !assets/**/*.png
 !assets/**/*.jpg
+!docs/images/*.png
+!docs/images/*.jpg
 !assets/**/*.jpeg
 !assets/**/*.gif
 
