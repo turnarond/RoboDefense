@@ -102,7 +102,7 @@ java -jar desktop/build/libs/desktop.jar
 ```
 ├── core/                    # 平台无关核心逻辑
 │   ├── game/                # 游戏逻辑（GameState, Enemy, Tower, Bullet）
-│   ├── render/              # 渲染系统（Camera, GameLoop, HUD）
+│   ├── render/              # 渲染系统（GameSceneRenderer, Camera, UiRenderer）
 │   ├── scene/               # 场景管理（9 个界面）
 │   ├── platform/            # 平台抽象层（5 个服务接口）
 │   ├── save/                # 存档系统（SQLite）
@@ -142,7 +142,7 @@ java -jar desktop/build/libs/desktop.jar
 
 ```
 星际塔防（Robo Defense）
-├── core/                 # 游戏核心模块 (62 个 Java 文件)
+├── core/                 # 游戏核心模块 (63 个 Java 文件)
 ├── desktop/              # 桌面平台启动器
 ├── assets/               # 游戏资源
 │   ├── images/           # 精灵图、背景图 (85 个文件)
@@ -172,9 +172,20 @@ java -Drdefense.debugForceHdFallback=true -jar desktop.jar
 
 ---
 
+## 文档
+
+- [CHANGELOG](CHANGELOG.md) · [白皮书](docs/01-白皮书.md) · [APK 差距分析](docs/06-APK差距分析报告.md) · [技术文章](docs/articles/2026-07-21-apk-to-desktop-port.md)
+
+## 许可证
+
+本项目基于原版 Android APK (MagicWach, v2.5.0) 逆向工程和重构，仅供学习交流使用。原始游戏版权归原作者所有。
+
+---
+
 ## 致谢
 
 - **原版作者**: MagicWach — Android 平台《星际塔防》v2.5.0
+- **桌面移植**: [turnarond](https://github.com/turnarond)
 - **框架**: [libGDX](https://libgdx.com) — 跨平台游戏开发框架
 - **字体**: SimHei (黑体) — 中文界面支持
 - **反编译工具**: [jadx](https://github.com/skylot/jadx) — APK 逆向分析
