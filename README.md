@@ -63,24 +63,9 @@ java -jar desktop.jar
 
 ## 开发
 
-### 构建命令
-
-```bash
-./gradlew :core:compileJava     # 编译核心模块
-./gradlew :desktop:dist         # 构建桌面 JAR
-./gradlew :desktop:run          # 运行桌面版
-./gradlew clean                 # 清理构建产物
-```
-
-### 调试参数
-
-```bash
-# 跳过主菜单直接进入游戏
-java -Drdefense.debugStartGame=true -jar desktop.jar
-
-# 强制触发 HD 图像回退
-java -Drdefense.debugForceHdFallback=true -jar desktop.jar
-```
+构建命令、调试参数与运行配置的权威说明统一收录在 [AGENTS.md](AGENTS.md)
+（见其「构建与运行」「改代码前必读的坑」小节，归属依据 `docs/00-文档总纲.md` §3 矩阵），
+本文件不重复展开。
 
 ---
 
