@@ -1,81 +1,111 @@
 # AGENTS.md
 
-This file provides guidance to the AI agent when working with code in this repository.
+本文件是本仓库**唯一权威**的工程约定入口，AI 助手与开发者都必须遵守。
+架构、需求、接口的细节在 `docs/` 中维护，本文件只描述「怎么做工程」的约定，不复制技术细节，避免两处内容互相腐化。
 
-# 语言规则
-- 所有回答都使用简体中文。
-- 代码注释、错误信息和提示都使用中文。
-- 当涉及专有技术术语时，可以保留英文原文，但请提供中文解释。
-- 代码本身（如变量名、函数名）、命令行指令、配置文件内容，则根据实际需要保持原样，不要翻译。
+## 语言规则
 
-## Project Overview
+- 所有对话、代码注释、文档、错误提示均使用简体中文。
+- 专有技术名词（如 libGDX、LWJGL3、SQLite、ABI）保留英文原文，必要时给出中文解释。
+- 代码符号（变量名、函数名、包名）、命令行指令、配置文件内容保持原样，不做翻译。
 
-星际塔防（Robo Defense）是一款经典的 2D 塔防游戏，基于 libGDX 框架开发，支持桌面平台运行。项目从 Android APK 反编译后进行了全面重构，核心逻辑已迁移到平台无关的 `core` 模块。
+## 一、Git 纪律
 
-## 架构说明
+1. **禁止 AI 助手直接 `git commit` / `git push`**。改动只留在工作区，由用户自行提交。
+2. **commit 粒度要粗**：一个逻辑变更（一个需求 / 一个 issue / 一次重构）对应一个 commit，不为每个小改动单独成 commit。
+3. **每次需求开发、变更、issue 修复都新建分支**，不在 `master` 上直接作业；分支名体现需求号或主题。
+4. **仓库内不允许出现 AI / 插件的中间目录**，例如 `.superpowers/`、`SDD/`、`.claude/`、`.omc/`、`.agents/`、`.qoder/`、`docs/superpowers/`。
+   这类目录一律写进 `.gitignore`，绝不允许提交。工程仓库必须保持简洁清晰、可长期维护。
 
-### 模块结构
+## 二、文档纪律
 
-| 模块 | 包名 | 说明 |
-|------|------|------|
-| `core` | `com.rdefense.core` | 游戏核心逻辑，平台无关，包含游戏状态、渲染、输入、存档等子系统 |
-| `desktop` | `com.rdefense.desktop` | 桌面版启动器（LWJGL3），提供平台服务实现 |
+5. **文档是唯一的对外接口**：任何需求、设计、接口、用法的变更，必须在同一次变更里同步更新 `docs/`，不允许文档腐化。
+6. **`docs/` 下文件夹名与文件名一律使用中文，并加数字前缀排序**：
+   `01-白皮书`、`02-需求分析`、`03-设计`、`04-使用手册`、`05-部署文档` 依此类推。
+7. **同一内容只允许存在一处**。不允许出现「新旧两份」「中英两份」并存的重复文档；重复的必须合并或删除。
+8. **过程性内容不进 `docs/`**：临时草稿、AI 生成的计划文件、历史流水账记录（如「共 N 次提交」）不写文档，历史由 git 记录。
 
-### 核心子系统
+## 三、开发流程（SDD）
 
-- **平台服务抽象** (`PlatformServices`)：统一封装渲染、音频、存储、输入、网络，各平台注入具体实现
-- **场景管理** (`GameScreen`)：基类提供生命周期管理，子类包括主菜单、关卡选择、游戏界面、设置、成就、奖励等
-- **游戏核心** (`GameState`)：对象池管理、网格系统、事件系统、碰撞检测
-- **游戏循环** (`GameLoop`)：固定 30fps 时间步长，支持快进模式
-- **存档系统**：SQLite 数据库存储游戏进度、成就、奖励积分
+9. **走 SDD 流程**：需求 → 方案设计 → 任务规划 → 实施 → 交付。
+10. **关键阶段必须有专家评审**，尤其是**方案设计**阶段。评审结论写入对应的 `docs/` 编号文档。
+    注意：SDD 是**流程**，其产物落在 `docs/` 的中文编号文档里，**不落在 AI 工具的私有目录**（见第 4 条）。
+11. **需求不明确或有设计分歧时先讨论**，不擅自扩大实现范围。
 
-## Critical Gotchas
+## 四、质量纪律
 
-- **无测试代码**：项目中没有单元测试或集成测试
-- **Java 8 兼容性**：项目使用 Java 8 source/target，确保代码兼容性
+12. **TDD，永远遵循红 — 绿 — 重构循环**：每次请求实现功能，必须同时附带对应的测试代码，或明确指出要让哪个已存在的测试用例变绿。不允许先写实现再补测试。
+13. **代码整洁**：遵循《代码整洁之道》(Clean Code) 的标准要求命名、函数长度、注释、重复代码与错误处理。
+14. **架构整洁**：遵循《架构整洁之道》(Clean Architecture) 的要求，并且**全局统筹考虑**，不为局部便利破坏分层边界与依赖方向。
+15. **长期运行稳定性**：分析与评审、测试时都要考虑长时间运行的稳定性，包括**内存泄露、句柄泄露**，包括对象池回收路径与 dispose 配对。
+16. **根因分析**：测试中遇到问题必须定位根本原因，多问几个为什么——既要找**业务逻辑**层面的根因，也要找**技术约束**层面的根因。
+    有条件就 debug：Windows 用 `cdb`，Linux 用 `gdb`；Windows 侧不好调时转到 WSL。
+    属于逻辑原因的必须从根上解决，**不允许反复打无关紧要的补丁**。
+    修改完成后要复审，把之前改错、绕路留下的补丁删掉，以免误导后人。
 
-## Build
+## 五、问题与边界处理
+
+17. **发现但不当期修的问题**：当场记入 issue（或写入待办文档），不能默默遗留。
+18. **不越界修复非本工程职责的问题**：属于其他工程、SDK 或文档供应商的问题可以排查取证，但最终通过 **issue** 的形式提给对应负责方。
+19. **重构需先讨论**：当新增或修改功能与整体架构冲突、影响过大或实现很别扭时，可以考虑重构；重构方案要一起讨论确认后再动手，不与功能改动混在一个 commit 里。
+
+## 六、工具集与版本管理
+
+20. **配套工具集**：开发过程中按项目工程需要创建工具集。工具要有自己独立的工程架构，**优先用 Python 做成系列化配套工具**，覆盖测试、部署、冒烟等验证。工具目录（`tools/`）必须纳入 git 管理，不能被 `.gitignore` 排除。
+21. **产品级文档**：产品要有总体白皮书 / roadmap，**每个版本要有版本边界**（明确做什么、不做什么）。
+22. **打 tag**：每个版本到达打包节点时，在 git 仓库中打 tag 并标注对应版本信息，与 `VERSION`、`CHANGELOG.md` 保持一致。
+23. **SDK 类库的兼容性**：如果本工程对外提供 SDK 库，版本升级时凡是涉及头文件 / 接口的改动，必须注意**向前兼容**，避免因二进制 ABI 不匹配引发冲突，导致使用方必须用新 SDK 重新编译。
+
+## 构建与运行
 
 ```bash
 ./gradlew :desktop:dist    # 构建桌面版独立 JAR → desktop/build/libs/desktop.jar
-```
-
-**运行桌面版：**
-```bash
 java -jar desktop/build/libs/desktop.jar
 ```
 
-WSL2 环境下启动器会自动检测并设置 `LIBGL_ALWAYS_SOFTWARE=1`（Mesa 硬件 GL 在 WSL2 下会 SIGSEGV）。Windows 侧直接运行 JAR 无需额外设置。
+WSL2 环境下启动器自动设置 `LIBGL_ALWAYS_SOFTWARE=1`（Mesa 硬件 GL 在 WSL2 下会 SIGSEGV）；Windows 侧直接运行 JAR 无需额外设置。
 
-- libGDX 1.12.1，Java 8 source/target 兼容性
-- `gradle.properties` 中 `android.useAndroidX=true` 和 `android.nonFinalResIds=false` 为遗留配置，目前不影响桌面构建
+## 技术栈与关键约束
 
-## Linux 环境配置
+| 项目 | 版本/配置 |
+|------|-----------|
+| 构建系统 | Gradle（Groovy DSL） |
+| 游戏框架 | libGDX 1.12.1 |
+| Java 兼容性 | Java 8（source/target 1.8，**禁用 Java 9+ API**：`List.of()`、`var`、模块系统） |
+| 桌面后端 | LWJGL3 |
+| 数据库 | SQLite（sqlite-jdbc） |
+| 中文字体 | simhei.ttf + FreeType 动态生成位图字体 |
 
-`local.properties` 和 `gradle.properties` 可能包含本地路径：
+**改代码前必读的坑：**
 
-1. **`local.properties`**：若需要 Android 构建，需设置 `sdk.dir` 路径
-2. **`gradle.properties`**：`org.gradle.jvmargs` 配置 Gradle JVM 参数
+- **无测试代码**：仓库当前没有任何单元/集成测试。这与第 12 条（TDD）直接冲突，是首要补齐项——新改动必须开始带测试。
+- **中文字库**：`CHINESE_CHARS` 常量硬编码了全部界面汉字，新增中文文本必须同步更新该常量，否则渲染为空白。
+- **存档格式**：存档魔数与版本号定义在 `SQLiteSaveManager`，修改存档格式必须同步递增版本号。
+- **调试开关**：`-Drdefense.debugForceHdFallback=true` 强制 HD 回退；`-Drdefense.debugStartGame=true` 跳过主菜单直接进游戏。
+- **资源路径**：Gradle 运行配置的 `workingDir` 指向 `../assets`（`desktop/build.gradle`），独立 JAR 则把 `assets/` 打进 JAR 根目录；资源加载统一用 `Gdx.files.internal()` 相对路径。
+- `gradle.properties` 中的 `android.useAndroidX`、`android.nonFinalResIds` 为反编译遗留配置，不影响桌面构建。
 
-## Localization
+## 模块结构
 
-所有用户界面文本为简体中文，存储在 `assets/i18n/` 目录下的属性文件中。添加或修改字符串时，请使用中文。
+| 模块 | 包名 | 说明 |
+|------|------|------|
+| `core` | `com.rdefense.core` | 游戏核心逻辑，平台无关（game / render / scene / platform / save / audio / input / config） |
+| `desktop` | `com.rdefense.desktop` | 桌面版启动器（LWJGL3），提供平台服务实现 |
 
-## 目录结构
+依赖方向与子系统职责见 `docs/03-架构设计.md`，本文件不重复。
 
-```
-├── core/                    # 游戏核心模块
-│   └── src/main/java/com/rdefense/core/
-│       ├── game/            # 游戏逻辑（GameState, Enemy, Tower, Bullet）
-│       ├── render/          # 渲染系统（GameWorldRenderer, HudRenderer）
-│       ├── scene/           # 场景管理（MainMenu, GamePlay, LevelSelect）
-│       ├── platform/        # 平台抽象层（PlatformServices, GameRenderer）
-│       ├── save/            # 存档系统（SQLite, PlayerPrefs）
-│       ├── audio/           # 音效管理
-│       ├── input/           # 输入处理
-│       └── config/          # 配置数据
-├── desktop/                 # 桌面版启动器
-├── assets/                  # 游戏资源（图片、字体、音效）
-├── docs/                    # 文档（设计文档、需求文档）
-└── gradle/                  # Gradle 构建脚本
-```
+## 文档索引
+
+| 文档 | 路径 | 内容 |
+|------|------|------|
+| 白皮书 | `docs/01-白皮书.md` | 产品概述、快速开始、游戏内容、版本边界 |
+| 需求文档 | `docs/02-需求文档.md` | 完整功能需求（F-Req-xxx） |
+| 架构设计 | `docs/03-架构设计.md` | 系统架构、模块设计、数据流、关键算法 |
+| 详细方案设计 | `docs/04-详细方案设计.md` | 子系统详细设计、奖励与成就生效链路、性能与适配 |
+| 接口设计 | `docs/05-接口设计.md` | 平台服务接口、存档接口、SQLite 表结构 |
+| 差距与评审报告 | `docs/06~08-*.md` | APK 差距分析、UI 交互与渲染架构评审 |
+| 模块对比报告 | `docs/09-模块对比报告.md` | 模块划分对比 |
+| 历史记录 | `docs/10~11-*.md` | 重构进度与迁移记录（阶段性，不随版本更新） |
+| 技术文章 | `docs/12-技术文章/` | 对外宣传文章 |
+
+游戏截图位于 `docs/images/`（中文文件名）。`CLAUDE.md` 只是指向本文件的别名，不承载内容。

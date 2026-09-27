@@ -1,7 +1,7 @@
 # 06 - APK 差距分析报告（原版 Android Build 2900 vs 桌面版）
 
 - 分析日期：2026-07-17
-- 设计依据：`docs/superpowers/specs/2026-07-17-apk-parity-analysis-design.md`
+- 设计依据：`docs/02-需求文档.md`、`docs/03-架构设计.md`
 - 基准：`xingjitafngv2.5.0_bvev_7273.com.apk`（Build 2900）jadx 反编译产物（60 类）
 - 方法：5 个分域只读代理并行对比 + 主线程逐条复核全部 P0/P1
 - 分级：P0 缺失功能 / P1 行为偏差 / P2 平台不适用 / P3 有意差异
@@ -148,7 +148,7 @@
 | # | 差异 | 证据（原版 ↔ 当前） |
 |---|------|----------------------|
 | 1 | 冲击波缺类型 10 直接火焰伤害（`applyDamage((power×len)/4, 10)` 整行缺失，冲击波伤害减半） | `GameTower.java:193-199` ↔ `GameTower.java:245-253` |
-| 2 | 跳蚤市场出售倍率 1.5×→2×（收益高 33%；注意 CLAUDE.md「出售价值×2」的描述本身与原版不符） | `TowerData.java:615-625` ↔ `TowerData.java:464-476` |
+| 2 | 跳蚤市场出售倍率 1.5×→2×（收益高 33%；早期开发指南中「出售价值×2」的描述本身与原版不符，现依据代码订正为 1.5×） | `TowerData.java:615-625` ↔ `TowerData.java:464-476` |
 | 3 | 高级 SAM 缺 CHEAP_FIREWORKS(奖励14) 成本减免 90→50 | `TowerData.java:182-184` ↔ 当前 `cost()` 无此逻辑 |
 | 4 | 溅射/地雷半径硬编码 2500：原版 `GRID²/4=256`（溅射面积放大 9.8 倍）、`GRID×2×GRID=2048`（地雷 1.22 倍） | `BulletData.java:33-34` ↔ `BulletData.java:29-32` |
 | 5 | TOUGH_MASK 死代码被修活：约 1/8 关卡敌人生命额外 +25%，难度高于原版【决策点1】 | `LevelDataGenerator.java:82-84` ↔ `LevelDataGenerator.java:110-112` |
@@ -157,7 +157,7 @@
 | 8 | 放塔缺「敌人占空格拒放」检查：阻挡塔可困住路径上的敌人【决策点3】 | `MovementGrid.java:45-64` ↔ `MovementGrid.java:228-231` |
 | 9 | Z_ACCEL 符号相反（-4→+4）：弹道形状不同（当前为更真实的抛物线）【决策点2】 | `Bullet.java:12` ↔ `Bullet.java:15` |
 | 10 | 地雷缺 shot_type 11 飞行豁免：无 Air Burst(奖励20) 时飞行单位也会触雷浪费 | `GameTower.java:149-153` ↔ 当前 `validTarget` 无 case 11 |
-| 11 | 火焰灼烧语义：原版 `+4` 后封顶到 amount（可缩短已有值）；当前 `Math.max` 不缩短（利玩家）【决策点4】。注：CLAUDE.md 称 applyDamage 已修正，此处仍与原版不同 | `Enemy.java:193-197` ↔ `Enemy.java:204-209` |
+| 11 | 火焰灼烧语义：原版 `+4` 后封顶到 amount（可缩短已有值）；当前 `Math.max` 不缩短（利玩家）【决策点4】。注：早期开发指南称 applyDamage 已全部修正，此处仍与原版不同 | `Enemy.java:193-197` ↔ `Enemy.java:204-209` |
 | 12 | imageCenter/drawShift 固定 16/0 vs 原版按精灵尺寸动态计算（命中点分布偏差，低影响，抽查级复核） | `EnemyData.java:251-273` ↔ `EnemyData.java:286-323` |
 | 13 | deathFrames 恒 10 vs `(value<<1)+10`：泰坦死亡动画 510 帧 → 10 帧 | `EnemyData.java:247-249` ↔ `EnemyData.java:328-330` |
 

@@ -61,10 +61,13 @@ jdk-*.zip
 # Save files
 saves/
 
-# Tools
-tools/
-*.py
+# Python 配套工具集：源码必须入库（见 AGENTS.md 第 20 条），只忽略运行产物
+__pycache__/
 *.pyc
+*.pyo
+.pytest_cache/
+.venv/
+venv/
 
 # Temporary image files
 *.png
@@ -84,4 +87,13 @@ Thumbs.db
 .project
 .settings/
 .checkstyle
+
+# AI 助手与插件的私有目录：一律不入库（见 AGENTS.md 第 4 条）
+.agents/
+.claude/
+.qoder/
 .omc/
+.remember/
+.superpowers/
+openspec/
+docs/superpowers/
