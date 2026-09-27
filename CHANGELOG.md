@@ -1,42 +1,48 @@
-# Changelog
+# 变更日志（CHANGELOG）
 
-## v2.6.0 (2026-07-20) — APK Fidelity + UI Redesign
+本文件记录各已发布版本的变更内容。版本序列与版本边界的唯一权威位置是
+`docs/02-版本边界与路线图.md` §1，本文件不重复界定边界，只做历史记述。
 
-86 commits. Based on `docs/06-APK差距分析报告.md` comprehensive 60-class comparison vs original Android APK (Build 2900).
+## v2.6.0 (2026-07-20) — APK 保真修复与 UI 全线重设计
+
+对应 `docs/02-版本边界与路线图.md` §1 的「2.6.0」行。
+依据 `docs/40-对照分析/41-APK差距分析报告.md` 对原版 Android APK（Build 2900）的 60 类逐类对比分析。
 
 > **运行时注意**：JDK 8-17 可直接 `java -jar desktop.jar` 运行。JDK 21+ 需加 `--enable-native-access=ALL-UNNAMED` 参数；退出时可能报 `Lwjgl3Cursor` 类缺失警告（libGDX 1.12.1 已知兼容性问题），不影响游戏运行。
 
-### Game Logic — APK Fidelity
-- Restored `saveScore` 4-bonus settlement (20% win + 1% HP + 20% perfect + money×difficulty×2)
-- Restored `RewardData.gameWon` difficulty progression system
-- Fixed score divisor 500 (was 100), per-map multiplier table, kill bonus formula
-- Fixed splash radius 2500→256, mine radius 2500→2048
-- Fixed sell multiplier 2×→1.5×, SAM cost reduction, death frame calculation
-- Fixed enemy speed scaling, burn semantics, mine flyer immunity, shockwave type 10
-- Restored TOUGH_MASK dead code, enemy placement rejection check
-- Added event/enemy caps, load validation, auto-save request
-- Fixed 10 save fields, message slot management
-- Fixed tower upgrade tree (medium gun branch error)
-- Fixed Y-sorting via GridObjectOrder
+### 游戏逻辑 — APK 保真
+- 恢复 `saveScore` 的 4 项加成结算（胜利 20% + 剩余 HP 1% + 完美通关 20% + 金钱×难度×2）
+- 恢复 `RewardData.gameWon` 难度递进系统
+- 修正得分除数为 500（原误为 100）、逐地图倍率表、击杀奖励公式
+- 修正溅射半径 2500→256、地雷连锁半径 2500→2048
+- 修正出售倍率 2×→1.5×、SAM 造价下调、死亡帧计算
+- 修正敌人速度缩放、燃烧（burn）语义、地雷对空中单位免疫、冲击波类型 10
+- 恢复 TOUGH_MASK 死代码链路与敌人放置拒绝检查
+- 增加事件/敌人数量上限、读档校验、自动存档请求
+- 修正 10 个存档字段、消息槽位管理
+- 修正塔升级树（中级枪分支错误）
+- 经 `GridObjectOrder` 修正 Y 轴排序
 
-### UI — Full Redesign
-- **Main Menu**: "Command Center" theme — deep void, gold beacon, holo-cyan, scan-line animation
-- **Battle HUD**: "Tactical Overlay" — compact header, HP≤3 pulse breathing, state in footer
-- **Pause/Upgrade**: Glass-panel semi-transparent overlays
-- **Shop**: Pure icon buttons (base+turret), color-state encoding
-- **Achievements**: 56px rows with descriptions + progress bars
-- **Title bar/Back button**: Unified to `GameScreen` base class
-- CHINESE_CHARS: Added 10+ missing glyphs
+### UI — 全线重设计
+- **主菜单**：「指挥中心」主题——深空暗底、金色信标、全息青色、扫描线动画
+- **战斗 HUD**：「战术叠加层」——紧凑头部、HP≤3 脉冲呼吸效果、状态收入底栏
+- **暂停/升级**：玻璃面板半透明叠加
+- **商店**：纯图标按钮（基座 + 炮塔），颜色即状态编码
+- **成就**：56px 行高，带描述与进度条
+- **标题栏/返回按钮**：统一收敛到 `GameScreen` 基类
+- CHINESE_CHARS：补齐 10 余个缺失字形
 
-### Architecture
-- Extracted `GameSceneRenderer` (525 lines) + `GameInputController` (67 lines)
-- `GamePlayScreen`: 931→553 lines (-41%)
-- begin/end batches: 10-19→2 pairs/frame
-- Removed dead code: GameRewardCalculator, HudRenderer, tower_pool
+### 架构
+- 抽出 `GameSceneRenderer`（525 行）与 `GameInputController`（67 行）
+- `GamePlayScreen` 由 931 行降至 553 行
+- begin/end 批次由每帧 10-19 对降至 2 对
+- 删除死代码：GameRewardCalculator、HudRenderer、tower_pool
 
-### New Features
-- Mixer 5-digit selector, Starfield particles, ScoreOverlay animation
-- New game confirmation dialog, keyboard shortcut hints
+### 新功能
+- Mixer 5 位数字码选择器、星空粒子背景、ScoreOverlay 动画
+- 新游戏确认对话框、键盘快捷键提示
 
 ## v2.5.0 (2026-07-17)
-Initial desktop port from Android APK. libGDX 1.12.1 / LWJGL3 backend.
+
+对应 `docs/02-版本边界与路线图.md` §1 的「2.5.0」行。
+从 Android APK 初次移植到桌面平台。libGDX 1.12.1 / LWJGL3 后端。

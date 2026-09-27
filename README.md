@@ -39,7 +39,6 @@ java -jar desktop.jar
 
 # 方式二：从源码构建
 ./gradlew :desktop:dist
-java -jar desktop/build/libs/desktop.jar
 ```
 
 ### 操作说明
@@ -57,124 +56,25 @@ java -jar desktop/build/libs/desktop.jar
 
 ## 游戏内容
 
-### 地图（7 种）
-
-| # | 地图 | 英文名 | 特点 |
-|---|------|--------|------|
-| 0 | 基地 | Basic Level | 标准 S 形路径 |
-| 1 | 遗迹 | The Ruins | 双路径交叉 |
-| 2 | 工厂 | The Factory | 含预置障碍物 |
-| 3 | 庭院 | The Courtyard | 三路径开放式 |
-| 4 | VR 训练场 | VR Training | 种子码随机生成 |
-| 5 | 巷道 | Roadway | 窄通道，星空背景 |
-| 6 | 通天塔 | Sky Tower | 垂直布局 |
-
-### 防御塔（23 种）
-
-```
-机枪塔 Lv1 → Lv2 → Lv3 ─┬→ 防空炮 → 重型防空炮
-                         ├→ 火焰塔 → 地狱之塔
-                         └→ (铀弹：穿甲弹)
-
-减速塔 Lv1 → Lv2 → Lv3 ─┬→ 传送塔 → 武装传送塔
-                         └→ 地雷塔 → 触发地雷 ─→ 火炬塔
-
-火箭塔 Lv1 → Lv2 → Lv3 ─┬→ 迫击炮 → 火炮
-                         └→ 地对空导弹 → 先进 SAM
-```
-
-### 敌人（11 种）
-
-士兵 · 重甲兵 · 跑步者 · 卡车 · 轻坦克 · 重坦克 · 直升机 · 战斗机 · 轰炸机 · 泰坦（BOSS）· 投弹者
-
-### 奖励升级（23 种）
-
-使用通关积分购买永久升级：弹药增强、爆炸增强、装填加速、效果延长、传送塔解锁、地雷塔解锁、铀弹、凝固汽油弹等。
-
-### 成就系统（88 项）
-
-涵盖难度通关、地图挑战、完美通关、特殊挑战、生存模式、VR 训练等类别。
-
----
-
-## 技术架构
-
-```
-├── core/                    # 平台无关核心逻辑
-│   ├── game/                # 游戏逻辑（GameState, Enemy, Tower, Bullet）
-│   ├── render/              # 渲染系统（GameSceneRenderer, Camera, UiRenderer）
-│   ├── scene/               # 场景管理（9 个界面）
-│   ├── platform/            # 平台抽象层（5 个服务接口）
-│   ├── save/                # 存档系统（SQLite）
-│   ├── audio/               # 音效管理
-│   ├── input/               # 输入处理
-│   └── config/              # 配置数据
-├── desktop/                 # 桌面启动器（LWJGL3）
-├── assets/                  # 游戏资源（图片、字体、音效、本地化）
-└── docs/                    # 设计文档
-```
-
-### 技术栈
-
-| 组件 | 版本 |
-|------|------|
-| 游戏框架 | libGDX 1.12.1 |
-| 桌面后端 | LWJGL 3 |
-| 数据库 | SQLite (sqlite-jdbc 3.45.1.0) |
-| 构建系统 | Gradle 9.x |
-| 语言 | Java 8+ (source/target 1.8) |
-| 字体 | FreeType + SimHei (黑体) |
+7 张地图、23 种防御塔、11 种敌人、88 项成就与 23 种奖励升级的完整清单见
+[docs/01-白皮书.md](docs/01-白皮书.md) §2 游戏内容。
 
 ---
 
 ## 开发
 
-### 构建命令
-
-```bash
-./gradlew :core:compileJava     # 编译核心模块
-./gradlew :desktop:dist         # 构建桌面 JAR
-./gradlew :desktop:run          # 运行桌面版
-./gradlew clean                 # 清理构建产物
-```
-
-### 项目结构
-
-```
-星际塔防（Robo Defense）
-├── core/                 # 游戏核心模块 (63 个 Java 文件)
-├── desktop/              # 桌面平台启动器
-├── assets/               # 游戏资源
-│   ├── images/           # 精灵图、背景图 (85 个文件)
-│   ├── sounds/           # 音效 (6 个 OGG)
-│   ├── fonts/            # 中文字体
-│   └── i18n/             # 中文本地化 (350 条)
-├── docs/                 # 文档
-├── build.gradle          # 根构建脚本
-└── settings.gradle       # 模块配置
-```
-
-### 调试参数
-
-```bash
-# 跳过主菜单直接进入游戏
-java -Drdefense.debugStartGame=true -jar desktop.jar
-
-# 强制触发 HD 图像回退
-java -Drdefense.debugForceHdFallback=true -jar desktop.jar
-```
-
----
-
-## 许可证
-
-本项目基于原版 Android APK (MagicWach, v2.5.0) 逆向工程和重构，仅供学习交流使用。原始游戏版权归原作者所有。
+构建命令、调试参数与运行配置的权威说明统一收录在 [AGENTS.md](AGENTS.md)
+（见其「构建与运行」「改代码前必读的坑」小节，归属依据 `docs/00-文档总纲.md` §3 矩阵），
+本文件不重复展开。
 
 ---
 
 ## 文档
 
-- [CHANGELOG](CHANGELOG.md) · [白皮书](docs/01-白皮书.md) · [APK 差距分析](docs/06-APK差距分析报告.md) · [技术文章](docs/articles/2026-07-21-apk-to-desktop-port.md)
+- 工程约定与文档索引：[AGENTS.md](AGENTS.md)
+- 文档体系规则：[docs/00-文档总纲.md](docs/00-文档总纲.md)
+- 产品定义与游戏内容：[docs/01-白皮书.md](docs/01-白皮书.md)
+- 版本边界与路线图：[docs/02-版本边界与路线图.md](docs/02-版本边界与路线图.md)
 
 ## 许可证
 
