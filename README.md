@@ -39,7 +39,6 @@ java -jar desktop.jar
 
 # 方式二：从源码构建
 ./gradlew :desktop:dist
-java -jar desktop/build/libs/desktop.jar
 ```
 
 ### 操作说明
@@ -57,73 +56,8 @@ java -jar desktop/build/libs/desktop.jar
 
 ## 游戏内容
 
-### 地图（7 种）
-
-| # | 地图 | 英文名 | 特点 |
-|---|------|--------|------|
-| 0 | 基地 | Basic Level | 标准 S 形路径 |
-| 1 | 遗迹 | The Ruins | 双路径交叉 |
-| 2 | 工厂 | The Factory | 含预置障碍物 |
-| 3 | 庭院 | The Courtyard | 三路径开放式 |
-| 4 | VR 训练场 | VR Training | 种子码随机生成 |
-| 5 | 巷道 | Roadway | 窄通道，星空背景 |
-| 6 | 通天塔 | Sky Tower | 垂直布局 |
-
-### 防御塔（23 种）
-
-```
-机枪塔 Lv1 → Lv2 → Lv3 ─┬→ 防空炮 → 重型防空炮
-                         ├→ 火焰塔 → 地狱之塔
-                         └→ (铀弹：穿甲弹)
-
-减速塔 Lv1 → Lv2 → Lv3 ─┬→ 传送塔 → 武装传送塔
-                         └→ 地雷塔 → 触发地雷 ─→ 火炬塔
-
-火箭塔 Lv1 → Lv2 → Lv3 ─┬→ 迫击炮 → 火炮
-                         └→ 地对空导弹 → 先进 SAM
-```
-
-### 敌人（11 种）
-
-士兵 · 重甲兵 · 跑步者 · 卡车 · 轻坦克 · 重坦克 · 直升机 · 战斗机 · 轰炸机 · 泰坦（BOSS）· 投弹者
-
-### 奖励升级（23 种）
-
-使用通关积分购买永久升级：弹药增强、爆炸增强、装填加速、效果延长、传送塔解锁、地雷塔解锁、铀弹、凝固汽油弹等。
-
-### 成就系统（88 项）
-
-涵盖难度通关、地图挑战、完美通关、特殊挑战、生存模式、VR 训练等类别。
-
----
-
-## 技术架构
-
-```
-├── core/                    # 平台无关核心逻辑
-│   ├── game/                # 游戏逻辑（GameState, Enemy, Tower, Bullet）
-│   ├── render/              # 渲染系统（GameSceneRenderer, Camera, UiRenderer）
-│   ├── scene/               # 场景管理（9 个界面）
-│   ├── platform/            # 平台抽象层（5 个服务接口）
-│   ├── save/                # 存档系统（SQLite）
-│   ├── audio/               # 音效管理
-│   ├── input/               # 输入处理
-│   └── config/              # 配置数据
-├── desktop/                 # 桌面启动器（LWJGL3）
-├── assets/                  # 游戏资源（图片、字体、音效、本地化）
-└── docs/                    # 设计文档
-```
-
-### 技术栈
-
-| 组件 | 版本 |
-|------|------|
-| 游戏框架 | libGDX 1.12.1 |
-| 桌面后端 | LWJGL 3 |
-| 数据库 | SQLite (sqlite-jdbc 3.45.1.0) |
-| 构建系统 | Gradle 9.x |
-| 语言 | Java 8+ (source/target 1.8) |
-| 字体 | FreeType + SimHei (黑体) |
+7 张地图、23 种防御塔、11 种敌人、88 项成就与 23 种奖励升级的完整清单见
+[docs/01-白皮书.md](docs/01-白皮书.md) §2 游戏内容。
 
 ---
 
@@ -136,22 +70,6 @@ java -jar desktop/build/libs/desktop.jar
 ./gradlew :desktop:dist         # 构建桌面 JAR
 ./gradlew :desktop:run          # 运行桌面版
 ./gradlew clean                 # 清理构建产物
-```
-
-### 项目结构
-
-```
-星际塔防（Robo Defense）
-├── core/                 # 游戏核心模块 (63 个 Java 文件)
-├── desktop/              # 桌面平台启动器
-├── assets/               # 游戏资源
-│   ├── images/           # 精灵图、背景图 (85 个文件)
-│   ├── sounds/           # 音效 (5 个 OGG)
-│   ├── fonts/            # 中文字体
-│   └── i18n/             # 中文本地化 (350 条)
-├── docs/                 # 文档
-├── build.gradle          # 根构建脚本
-└── settings.gradle       # 模块配置
 ```
 
 ### 调试参数
@@ -168,22 +86,10 @@ java -Drdefense.debugForceHdFallback=true -jar desktop.jar
 
 ## 文档
 
-工程约定入口：[AGENTS.md](AGENTS.md)（唯一权威，`CLAUDE.md` 仅为指向它的别名）
-
-| 文档 | 内容 |
-|------|------|
-| [01-白皮书](docs/01-白皮书.md) | 产品概述、快速开始、游戏内容、版本边界 |
-| [02-需求文档](docs/02-需求文档.md) | 完整功能需求（F-Req-xxx） |
-| [03-架构设计](docs/03-架构设计.md) | 系统架构、模块设计、数据流 |
-| [04-详细方案设计](docs/04-详细方案设计.md) | 子系统详细设计、奖励与成就生效链路 |
-| [05-接口设计](docs/05-接口设计.md) | 平台服务接口、存档接口、SQLite 表结构 |
-| [06-APK差距分析报告](docs/06-APK差距分析报告.md) | 原版与桌面版逐类差距 |
-| [07-UI设计交互评审报告](docs/07-UI设计交互评审报告.md) | 视觉与交互可用性评审 |
-| [08-UI渲染架构评审报告](docs/08-UI渲染架构评审报告.md) | 渲染性能与代码架构评审 |
-| [09-模块对比报告](docs/09-模块对比报告.md) | 模块划分对比 |
-| [10-重构进度](docs/10-重构进度.md) / [11-核心逻辑迁移完成](docs/11-核心逻辑迁移完成.md) | 阶段性历史记录 |
-| [12-技术文章](docs/12-技术文章/) | APK 逆向移植桌面版全记录 |
-| [CHANGELOG](CHANGELOG.md) | 版本更新日志 |
+- 工程约定与文档索引：[AGENTS.md](AGENTS.md)
+- 文档体系规则：[docs/00-文档总纲.md](docs/00-文档总纲.md)
+- 产品定义与游戏内容：[docs/01-白皮书.md](docs/01-白皮书.md)
+- 版本边界与路线图：[docs/02-版本边界与路线图.md](docs/02-版本边界与路线图.md)
 
 ## 许可证
 

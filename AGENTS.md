@@ -65,18 +65,11 @@ java -jar desktop/build/libs/desktop.jar
 
 WSL2 环境下启动器自动设置 `LIBGL_ALWAYS_SOFTWARE=1`（Mesa 硬件 GL 在 WSL2 下会 SIGSEGV）；Windows 侧直接运行 JAR 无需额外设置。
 
-## 技术栈与关键约束
+## 技术栈与模块结构
 
-| 项目 | 版本/配置 |
-|------|-----------|
-| 构建系统 | Gradle（Groovy DSL） |
-| 游戏框架 | libGDX 1.12.1 |
-| Java 兼容性 | Java 8（source/target 1.8，**禁用 Java 9+ API**：`List.of()`、`var`、模块系统） |
-| 桌面后端 | LWJGL3 |
-| 数据库 | SQLite（sqlite-jdbc） |
-| 中文字体 | simhei.ttf + FreeType 动态生成位图字体 |
+见 `docs/10-架构设计.md` §3 技术栈、§2 项目结构。本文件不重复，避免两处腐化。
 
-**改代码前必读的坑：**
+## 改代码前必读的坑
 
 - **无测试代码**：仓库当前没有任何单元/集成测试。这与第 12 条（TDD）直接冲突，是首要补齐项——新改动必须开始带测试。
 - **中文字库**：`CHINESE_CHARS` 常量硬编码了全部界面汉字，新增中文文本必须同步更新该常量，否则渲染为空白。
@@ -84,15 +77,6 @@ WSL2 环境下启动器自动设置 `LIBGL_ALWAYS_SOFTWARE=1`（Mesa 硬件 GL �
 - **调试开关**：`-Drdefense.debugForceHdFallback=true` 强制 HD 回退；`-Drdefense.debugStartGame=true` 跳过主菜单直接进游戏。
 - **资源路径**：Gradle 运行配置的 `workingDir` 指向 `../assets`（`desktop/build.gradle`），独立 JAR 则把 `assets/` 打进 JAR 根目录；资源加载统一用 `Gdx.files.internal()` 相对路径。
 - `gradle.properties` 中的 `android.useAndroidX`、`android.nonFinalResIds` 为反编译遗留配置，不影响桌面构建。
-
-## 模块结构
-
-| 模块 | 包名 | 说明 |
-|------|------|------|
-| `core` | `com.rdefense.core` | 游戏核心逻辑，平台无关（game / render / scene / platform / save / audio / input / config） |
-| `desktop` | `com.rdefense.desktop` | 桌面版启动器（LWJGL3），提供平台服务实现 |
-
-依赖方向与子系统职责见 `docs/03-架构设计.md`，本文件不重复。
 
 ## 文档索引
 
